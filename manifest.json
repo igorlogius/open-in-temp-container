@@ -1,0 +1,17 @@
+{
+  "author": "igorlogius",
+  "homepage_url": "https://github.com/igorlogius/reopen-in-temporary-container",
+  "background": { "scripts": ["background.js"] },
+  "browser_action": { "default_area": "navbar" },
+  "commands": {
+    "_execute_browser_action": {
+      "description": "Reopen current tab in a new temporary container tab"
+    }
+  },
+  "description": "Reopen current tab in a new temporary container tab",
+  "icons": {},
+  "manifest_version": 2,
+  "name": "Reopen in Temporary Container",
+  "permissions": ["activeTab", "cookies", "contextualIdentities"],
+  "version": "1.0.0"
+}
