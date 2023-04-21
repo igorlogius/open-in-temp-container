@@ -38,12 +38,21 @@ async function onTabRemoved() {
 
 async function onBAClicked(tab) {
   let container = await createContainer();
-  await browser.tabs.create({
-    active: true,
-    index: tab.index,
-    url: tab.url,
-    cookieStoreId: container.cookieStoreId,
-  });
+  if (tab.incognito) {
+    await browser.windows.create({
+      url: tab.url,
+      focused: true,
+      incognito: false,
+      cookieStoreId: container.cookieStoreId,
+    });
+  } else {
+    await browser.tabs.create({
+      active: true,
+      index: tab.index,
+      url: tab.url,
+      cookieStoreId: container.cookieStoreId,
+    });
+  }
   browser.tabs.remove(tab.id);
 }
 
