@@ -5,7 +5,10 @@
   "browser_action": { "default_area": "navbar" },
   "commands": {
     "_execute_browser_action": {
-      "description": "Reopen current tab in a new temporary container tab"
+      "description": "ReOpen Current Tab"
+    },
+    "onlyopen": {
+      "description": "Open Another Tab"
     }
   },
   "description": "Reopen current tab in a new temporary container tab",
@@ -15,5 +18,5 @@
   "manifest_version": 2,
   "name": "Reopen in Temporary Container",
   "permissions": ["activeTab", "cookies", "contextualIdentities"],
-  "version": "1.0.2"
+  "version": "1.0.3"
 }

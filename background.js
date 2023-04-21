@@ -36,11 +36,18 @@ async function onTabRemoved() {
   }, 5000);
 }
 
-async function onBAClicked(tab) {
+function fixurl(url) {
+  if (url.startsWith("http") || url === "about:blank") {
+    return url;
+  }
+  return "about:blank";
+}
+
+async function onBAClicked(tab, clickdata = null) {
   let container = await createContainer();
   if (tab.incognito) {
     await browser.windows.create({
-      url: tab.url,
+      url: fixurl(tab.url),
       focused: true,
       incognito: false,
       cookieStoreId: container.cookieStoreId,
@@ -48,12 +55,19 @@ async function onBAClicked(tab) {
   } else {
     await browser.tabs.create({
       active: true,
-      index: tab.index,
-      url: tab.url,
+      index: tab.index + 1,
+      url: fixurl(tab.url),
       cookieStoreId: container.cookieStoreId,
     });
   }
-  browser.tabs.remove(tab.id);
+  // remove tab if the user did not hold down Ctrl or clicked with the Auxiliary button (wheel)
+  if (
+    clickdata !== null &&
+    !clickdata.modifiers.includes("Ctrl") &&
+    clickdata.button !== 1
+  ) {
+    browser.tabs.remove(tab.id);
+  }
 }
 
 async function createContainer() {
@@ -73,3 +87,15 @@ async function createContainer() {
 // register listeners
 browser.tabs.onRemoved.addListener(onTabRemoved);
 browser.browserAction.onClicked.addListener(onBAClicked);
+
+browser.commands.onCommand.addListener(async (command) => {
+  if (command === "onlyopen") {
+    const tabs = await browser.tabs.query({
+      currentWindow: true,
+      active: true,
+    });
+    if (tabs.length > 0) {
+      onBAClicked(tabs[0]);
+    }
+  }
+});
