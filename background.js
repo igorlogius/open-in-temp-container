@@ -16,6 +16,32 @@ const colors = [
   "purple",
 ];
 
+browser.menus.create({
+  title: "Open in Temp Container",
+  contexts: ["link", "page", "tab", "bookmark"],
+  onclick: async (clickdata, tab) => {
+    if (clickdata.linkUrl) {
+      createTempContainerTab(clickdata.linkUrl);
+    } else if (clickdata.bookmarkId) {
+      const bms = await browser.bookmarks.get(clickdata.bookmarkId);
+      if (bms.length > 0) {
+        const bm = bms[0];
+        if (bm.url) {
+          createTempContainerTab(bm.url);
+        }
+      }
+    } else if (clickdata.frameUrl) {
+      createTempContainerTab(clickdata.frameUrl);
+    } else if (clickdata.srcUrl) {
+      createTempContainerTab(clickdata.srcUrl);
+    } else if (clickdata.pageUrl) {
+      createTempContainerTab(clickdata.pageUrl);
+    } else if (tab.url) {
+      createTempContainerTab(tab.url);
+    }
+  },
+});
+
 // delayed container cleanup
 async function onTabRemoved() {
   if (containerCleanupTimer !== null) {
@@ -43,31 +69,23 @@ function fixurl(url) {
   return "about:blank";
 }
 
-async function onBAClicked(tab, clickdata = null) {
+async function createTempContainerTab(url) {
   let container = await createContainer();
-  if (tab.incognito) {
-    await browser.windows.create({
-      url: fixurl(tab.url),
-      focused: true,
-      incognito: false,
-      cookieStoreId: container.cookieStoreId,
-    });
-  } else {
-    await browser.tabs.create({
-      active: true,
-      index: tab.index + 1,
-      url: fixurl(tab.url),
-      cookieStoreId: container.cookieStoreId,
-    });
-  }
-  // remove tab if the user did not hold down Ctrl or clicked with the Auxiliary button (wheel)
-  if (
-    clickdata !== null &&
-    !clickdata.modifiers.includes("Ctrl") &&
-    clickdata.button !== 1
-  ) {
-    browser.tabs.remove(tab.id);
-  }
+
+  let tabs = await browser.tabs.query({ currentWindow: true, active: true });
+
+  const index = tabs.length > 0 ? tabs[0].index + 1 : -1;
+
+  browser.tabs.create({
+    active: true,
+    index: index,
+    url: fixurl(url),
+    cookieStoreId: container.cookieStoreId,
+  });
+}
+
+function onBAClicked(tab) {
+  createTempContainerTab(tab.url);
 }
 
 async function createContainer() {
@@ -87,15 +105,3 @@ async function createContainer() {
 // register listeners
 browser.tabs.onRemoved.addListener(onTabRemoved);
 browser.browserAction.onClicked.addListener(onBAClicked);
-
-browser.commands.onCommand.addListener(async (command) => {
-  if (command === "onlyopen") {
-    const tabs = await browser.tabs.query({
-      currentWindow: true,
-      active: true,
-    });
-    if (tabs.length > 0) {
-      onBAClicked(tabs[0]);
-    }
-  }
-});

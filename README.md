@@ -1,8 +1,10 @@
-Reopen the current tab in a new empty temporary container
+Open a tab, page, link or bookmark in a new empty temporary container
 
 <b>Usage/Features</b>
 
-- activate via toolbar button or custom keyboard shotcut
+- context menu on various elements
+- toolbar button 
+- custum shortcut
 
 <b>Notes:</b>
 <ol>
