@@ -9,9 +9,11 @@
     }
   },
   "description": "Reopen current tab in a new temporary container tab",
-  "icons": {},
+  "icons": {
+    "96": "icon.png"
+  },
   "manifest_version": 2,
   "name": "Reopen in Temporary Container",
   "permissions": ["activeTab", "cookies", "contextualIdentities"],
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

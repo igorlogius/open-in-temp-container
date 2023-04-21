@@ -1,9 +1,8 @@
-Reopen the current tab in a new empty temporary container (without cookies)
+Reopen the current tab in a new empty temporary container
 
 <b>Usage/Features</b>
 
 - activate via toolbar button or custom keyboard shotcut
-- super simple, no configuration 
 
 <b>Notes:</b>
 <ol>
