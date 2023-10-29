@@ -1,7 +1,6 @@
 /* global browser */
 
 // cookieStoreIds of all managed containers
-var containers = new Set();
 let containerCleanupTimer = null;
 
 // array of all allowed container colors
@@ -52,10 +51,15 @@ async function onTabRemoved() {
     const containerWithTabs = new Set(
       (await browser.tabs.query({})).map((t) => t.cookieStoreId)
     );
+
+    containers = await browser.contextualIdentities.query({});
+
     containers.forEach((c) => {
-      if (!containerWithTabs.has(c)) {
-        containers.delete(c);
-        browser.contextualIdentities.remove(c);
+      if (
+        !containerWithTabs.has(c.cookieStoreId) &&
+        c.name.startsWith("Temp")
+      ) {
+        browser.contextualIdentities.remove(c.cookieStoreId);
       }
     });
     containerCleanupTimer = null;
@@ -98,10 +102,11 @@ async function createContainer() {
   let cookieStoreId = container.cookieStoreId;
   let name = "Temp " + Date.now();
   await browser.contextualIdentities.update(cookieStoreId, { name: name });
-  containers.add(cookieStoreId);
   return container;
 }
 
 // register listeners
 browser.tabs.onRemoved.addListener(onTabRemoved);
 browser.browserAction.onClicked.addListener(onBAClicked);
+//browser.runtime.onStartup.addListener(onTabRemoved);
+setTimeout(onTabRemoved, 5000);
