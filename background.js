@@ -2,6 +2,7 @@
 
 // cookieStoreIds of all managed containers
 let containerCleanupTimer = null;
+let opennewtab = false;
 
 // array of all allowed container colors
 const colors = [
@@ -74,12 +75,9 @@ function fixurl(url) {
 }
 
 async function createTempContainerTab(url) {
-  let container = await createContainer();
-
+  let container = await createContainer({});
   let tabs = await browser.tabs.query({ currentWindow: true, active: true });
-
   const index = tabs.length > 0 ? tabs[0].index + 1 : -1;
-
   browser.tabs.create({
     active: true,
     index: index,
@@ -88,11 +86,25 @@ async function createTempContainerTab(url) {
   });
 }
 
-function onBAClicked(tab) {
-  createTempContainerTab(tab.url);
+async function openNewTabInExistingContainer(cookieStoreId) {
+  let tabs = await browser.tabs.query({ currentWindow: true, active: true });
+  const index = tabs.length > 0 ? tabs[0].index + 1 : -1;
+  browser.tabs.create({
+    active: true,
+    index: index,
+    cookieStoreId: cookieStoreId,
+  });
 }
 
-async function createContainer() {
+function onBAClicked(tab) {
+  if (opennewtab) {
+    createTempContainerTab("about:newtab");
+  } else {
+    createTempContainerTab(tab.url);
+  }
+}
+
+async function createContainer(args) {
   let color = colors[Math.floor(Math.random() * colors.length)];
   let container = await browser.contextualIdentities.create({
     name: "Temp",
@@ -105,8 +117,34 @@ async function createContainer() {
   return container;
 }
 
+async function syncMemory() {
+  opennewtab = await getFromStorage("boolean", "opennewtab", false);
+}
+
+(async () => {
+  await syncMemory();
+})();
+
 // register listeners
 browser.tabs.onRemoved.addListener(onTabRemoved);
 browser.browserAction.onClicked.addListener(onBAClicked);
 //browser.runtime.onStartup.addListener(onTabRemoved);
 setTimeout(onTabRemoved, 5000);
+
+browser.storage.onChanged.addListener(syncMemory);
+
+browser.commands.onCommand.addListener(async (command) => {
+  if (command === "opennewtab") {
+    createTempContainerTab("about:newtab");
+  }
+
+  if (command === "openinsame") {
+    // get container of currently active tab
+    // create new tab with container id
+    let tabs = await browser.tabs.query({ currentWindow: true, active: true });
+    if (tabs.length > 0) {
+      const atab = tabs[0];
+      openNewTabInExistingContainer(atab.cookieStoreId);
+    }
+  }
+});

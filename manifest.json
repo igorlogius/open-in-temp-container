@@ -1,11 +1,17 @@
 {
   "author": "igorlogius",
-  "homepage_url": "https://github.com/igorlogius/reopen-in-temporary-container",
+  "homepage_url": "https://github.com/igorlogius/open-in-temp-container",
   "background": { "scripts": ["background.js"] },
   "browser_action": { "default_area": "navbar" },
   "commands": {
     "_execute_browser_action": {
-      "description": "Open Current Tab in Temp Container"
+      "description": "Toolbar button action shortcut"
+    },
+    "opennewtab": {
+      "description": "Open newtab in temp container"
+    },
+    "openinsame": {
+      "description": "Open newtab in same container as activ tab"
     }
   },
   "description": "Open the page,tab,link or bookmark in a new temporary container tab",
@@ -14,12 +20,16 @@
   },
   "manifest_version": 2,
   "name": "Open in Temp Container",
+  "options_ui": {
+    "page": "options.html"
+  },
   "permissions": [
+    "storage",
     "bookmarks",
     "contextualIdentities",
     "cookies",
     "menus",
     "tabs"
   ],
-  "version": "1.1.4"
+  "version": "1.1.5"
 }
