@@ -92,7 +92,7 @@ async function createTempContainerTab(url) {
     //url: fixurl(url),
     cookieStoreId: container.cookieStoreId,
   };
-  if (typeof url === "string") {
+  if (typeof url === "string" && url.startsWith("http")) {
     obj["url"] = url;
   }
   browser.tabs.create(obj);
