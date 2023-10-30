@@ -3,6 +3,7 @@
 // cookieStoreIds of all managed containers
 let containerCleanupTimer = null;
 let opennewtab = false;
+let groupcolor = "random";
 
 // array of all allowed container colors
 const colors = [
@@ -15,6 +16,11 @@ const colors = [
   "pink",
   "purple",
 ];
+
+async function getFromStorage(type, id, fallback) {
+  let tmp = await browser.storage.local.get(id);
+  return typeof tmp[id] === type ? tmp[id] : fallback;
+}
 
 browser.menus.create({
   title: "Open in Temp Container",
@@ -105,7 +111,11 @@ function onBAClicked(tab) {
 }
 
 async function createContainer(args) {
-  let color = colors[Math.floor(Math.random() * colors.length)];
+  console.debug(groupcolor);
+  let color =
+    groupcolor !== "random"
+      ? groupcolor
+      : colors[Math.floor(Math.random() * colors.length)];
   let container = await browser.contextualIdentities.create({
     name: "Temp",
     color: color,
@@ -119,6 +129,7 @@ async function createContainer(args) {
 
 async function syncMemory() {
   opennewtab = await getFromStorage("boolean", "opennewtab", false);
+  groupcolor = await getFromStorage("string", "groupcolor", "random");
 }
 
 (async () => {

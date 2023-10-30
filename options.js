@@ -30,7 +30,7 @@ function onChange(evt) {
   browser.storage.local.set(obj).catch(console.error);
 }
 
-["opennewtab"].map((id) => {
+["opennewtab", "groupcolor"].map((id) => {
   browser.storage.local
     .get(id)
     .then((obj) => {
