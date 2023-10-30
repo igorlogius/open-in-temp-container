@@ -4,6 +4,7 @@
 let containerCleanupTimer = null;
 let opennewtab = false;
 let groupcolor = "random";
+let deldelay = 3000;
 
 // array of all allowed container colors
 const colors = [
@@ -70,7 +71,7 @@ async function onTabRemoved() {
       }
     });
     containerCleanupTimer = null;
-  }, 5000);
+  }, deldelay);
 }
 
 function fixurl(url) {
@@ -110,8 +111,7 @@ function onBAClicked(tab) {
   }
 }
 
-async function createContainer(args) {
-  console.debug(groupcolor);
+async function createContainer() {
   let color =
     groupcolor !== "random"
       ? groupcolor
@@ -130,17 +130,18 @@ async function createContainer(args) {
 async function syncMemory() {
   opennewtab = await getFromStorage("boolean", "opennewtab", false);
   groupcolor = await getFromStorage("string", "groupcolor", "random");
+  deldelay = await getFromStorage("number", "deldelay", 3000);
 }
 
 (async () => {
   await syncMemory();
+  setTimeout(onTabRemoved, deldelay);
 })();
 
 // register listeners
 browser.tabs.onRemoved.addListener(onTabRemoved);
 browser.browserAction.onClicked.addListener(onBAClicked);
 //browser.runtime.onStartup.addListener(onTabRemoved);
-setTimeout(onTabRemoved, 5000);
 
 browser.storage.onChanged.addListener(syncMemory);
 
