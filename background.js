@@ -85,12 +85,17 @@ async function createTempContainerTab(url) {
   let container = await createContainer({});
   let tabs = await browser.tabs.query({ currentWindow: true, active: true });
   const index = tabs.length > 0 ? tabs[0].index + 1 : -1;
-  browser.tabs.create({
+
+  obj = {
     active: true,
     index: index,
-    url: fixurl(url),
+    //url: fixurl(url),
     cookieStoreId: container.cookieStoreId,
-  });
+  };
+  if (typeof url === "string") {
+    obj["url"] = url;
+  }
+  browser.tabs.create(obj);
 }
 
 async function openNewTabInExistingContainer(cookieStoreId) {
@@ -105,7 +110,7 @@ async function openNewTabInExistingContainer(cookieStoreId) {
 
 function onBAClicked(tab) {
   if (opennewtab) {
-    createTempContainerTab("about:newtab");
+    createTempContainerTab();
   } else {
     createTempContainerTab(tab.url);
   }
