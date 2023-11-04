@@ -3,11 +3,11 @@
 // cookieStoreIds of all managed containers
 let containerCleanupTimer = null;
 let opennewtab = false;
-let groupcolor = "random";
+let usecolors = [];
 let deldelay = 3000;
 
 // array of all allowed container colors
-const colors = [
+const allcolors = [
   "blue",
   "turquoise",
   "green",
@@ -117,10 +117,7 @@ function onBAClicked(tab) {
 }
 
 async function createContainer() {
-  let color =
-    groupcolor !== "random"
-      ? groupcolor
-      : colors[Math.floor(Math.random() * colors.length)];
+  let color = usecolors[Math.floor(Math.random() * usecolors.length)];
   let container = await browser.contextualIdentities.create({
     name: "Temp",
     color: color,
@@ -134,7 +131,13 @@ async function createContainer() {
 
 async function syncMemory() {
   opennewtab = await getFromStorage("boolean", "opennewtab", false);
-  groupcolor = await getFromStorage("string", "groupcolor", "random");
+  usecolors = await getFromStorage("object", "usecolors", allcolors);
+  if (!Array.isArray(usecolors)) {
+    usecolors = allcolors;
+  }
+  if (usecolors.length < 1) {
+    usecolors = allcolors;
+  }
   deldelay = await getFromStorage("number", "deldelay", 3000);
 }
 

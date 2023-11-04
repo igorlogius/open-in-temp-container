@@ -7,7 +7,7 @@ function onChange(evt) {
   let value = el.type === "checkbox" ? el.checked : el.value;
   let obj = {};
 
-  //console.log(id, value, el.type);
+  console.log(id, value, el.type);
   if (value === "") {
     return;
   }
@@ -30,7 +30,7 @@ function onChange(evt) {
   browser.storage.local.set(obj).catch(console.error);
 }
 
-["deldelay", "opennewtab", "groupcolor"].map((id) => {
+["deldelay", "opennewtab"].map((id) => {
   browser.storage.local
     .get(id)
     .then((obj) => {
@@ -49,4 +49,31 @@ function onChange(evt) {
 
   let el = document.getElementById(id);
   el.addEventListener("input", onChange);
+});
+
+["usecolors"].map((id) => {
+  browser.storage.local
+    .get(id)
+    .then((obj) => {
+      let el = document.getElementById(id);
+      let val = obj[id];
+
+      if (Array.isArray(val) && val.length > 0) {
+        for (var i = 0; i < el.options.length; i++) {
+          el.options[i].selected = val.includes(el.options[i].value);
+        }
+      }
+    })
+    .catch(console.error);
+
+  let el = document.getElementById(id);
+  el.addEventListener("input", () => {
+    const selectedItems = Array.from(el.selectedOptions).map(
+      (option) => option.value
+    );
+    console.debug(selectedItems);
+    let obj = {};
+    obj[id] = selectedItems;
+    browser.storage.local.set(obj).catch(console.error);
+  });
 });
