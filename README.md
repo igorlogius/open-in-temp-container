@@ -2,9 +2,8 @@ Open a tab, page, link or bookmark in a new empty temporary container
 
 <b>Usage/Features</b>
 
-- context menu on various elements
-- toolbar button 
-- custum shortcut
+- context menu on various elements - toolbar button - custum shortcut
+- Note: to enable the bookmark entry, enable the optional permission in the addon settings
 
 <b>Notes:</b>
 <ol>
