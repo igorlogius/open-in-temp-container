@@ -1,5 +1,7 @@
 Open a tab, page, link or bookmark in a new empty temporary container
 
+More Infos about containers: https://support.mozilla.org/en-US/kb/how-use-firefox-containers
+
 <b>Usage/Features</b>
 
 - context menu on various elements - toolbar button - custum shortcut
