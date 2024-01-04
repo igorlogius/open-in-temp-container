@@ -170,22 +170,26 @@ browser.commands.onCommand.addListener(async (command) => {
 });
 
 async function handleUpdated(tabId, changeInfo, tabInfo) {
-  if (changeInfo.status === "complete") {
-    if (tabInfo.url.startsWith("http")) {
+  //if (changeInfo.status === "complete")
+  if (changeInfo.url) {
+    console.debug(changeInfo.url);
+    if (changeInfo.url.startsWith("http")) {
       try {
         const container = await browser.contextualIdentities.get(
           tabInfo.cookieStoreId
         );
         if (container.name.startsWith("Temp")) {
           const visits = await browser.history.getVisits({
-            url: tabInfo.url,
+            url: changeInfo.url,
           });
 
-          if (visits.length === 1) {
-            browser.history.deleteUrl({
-              url: tabInfo.url,
-            });
-            //console.debug("removed url", tabInfo.url);
+          if (visits.length < 5) {
+            setTimeout(() => {
+              browser.history.deleteUrl({
+                url: changeInfo.url,
+              });
+              console.debug("removed url", tabInfo.url);
+            }, 2000);
           }
         }
       } catch (e) {
@@ -201,11 +205,11 @@ var testPermissions1 = {
 
 async function handlePermissionChange(permissions) {
   if (await browser.permissions.contains(testPermissions1)) {
-    //console.debug("added handleUpdated listener");
     await browser.tabs.onUpdated.addListener(handleUpdated);
+    console.debug("added handleUpdated listener");
   } else {
     await browser.tabs.onUpdated.removeListener(handleUpdated);
-    //console.debug("removed handleUpdated listener");
+    console.debug("removed handleUpdated listener");
   }
 }
 browser.permissions.onAdded.addListener(handlePermissionChange);
