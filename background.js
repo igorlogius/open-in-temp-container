@@ -168,3 +168,47 @@ browser.commands.onCommand.addListener(async (command) => {
     }
   }
 });
+
+async function handleUpdated(tabId, changeInfo, tabInfo) {
+  if (changeInfo.status === "complete") {
+    if (tabInfo.url.startsWith("http")) {
+      try {
+        const container = await browser.contextualIdentities.get(
+          tabInfo.cookieStoreId
+        );
+        if (container.name.startsWith("Temp")) {
+          const visits = await browser.history.getVisits({
+            url: tabInfo.url,
+          });
+
+          if (visits.length === 1) {
+            browser.history.deleteUrl({
+              url: tabInfo.url,
+            });
+            //console.debug("removed url", tabInfo.url);
+          }
+        }
+      } catch (e) {
+        // noop
+      }
+    }
+  }
+}
+
+var testPermissions1 = {
+  permissions: ["history"],
+};
+
+async function handlePermissionChange(permissions) {
+  if (await browser.permissions.contains(testPermissions1)) {
+    //console.debug("added handleUpdated listener");
+    await browser.tabs.onUpdated.addListener(handleUpdated);
+  } else {
+    await browser.tabs.onUpdated.removeListener(handleUpdated);
+    //console.debug("removed handleUpdated listener");
+  }
+}
+browser.permissions.onAdded.addListener(handlePermissionChange);
+browser.permissions.onRemoved.addListener(handlePermissionChange);
+
+handlePermissionChange();

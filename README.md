@@ -1,6 +1,6 @@
-Open a tab, page, link or bookmark in a new empty temporary container
-
-More Infos about containers: https://support.mozilla.org/en-US/kb/how-use-firefox-containers
+Open a tab, page, link or bookmark in a new empty temporary container More Infos
+about containers:
+https://support.mozilla.org/en-US/kb/how-use-firefox-containers
 
 <b>Short Demo Video:</b>
 
@@ -8,8 +8,20 @@ https://github.com/igorlogius/open-in-temp-container/assets/67047467/996f18a0-f9
 
 <b>Usage/Features</b>
 <ul>
-<li>context menu on various elements - toolbar button - custum shortcut</li>
-<li>Note: to enable the bookmark entry, enable the optional permission in the addon settings</li>
+  <li>context menu on various elements - toolbar button - custum shortcut</li>
+  <li>
+    To enable the bookmark entry, enable the optional bookmark permission in the
+    addon settings
+  </li>
+  <li>
+    <b>History Deletion / Prevention </b>
+    By enabeling the history permission, the temporary container tabs will
+    prevent the creation of new history items for sites/urls which never been
+    visited before. (aka. dont have any existing history entries yet). This
+    method was choosen, because it is non speculative but still less potentially
+    destructive than the alternative of deleting all visits to a visited urls,
+    like how the `temporary containers` addons Delete History works.
+  </li>
 </ul>
 
 <b>Notes:</b>

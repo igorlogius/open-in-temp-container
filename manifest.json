@@ -30,8 +30,6 @@
     "menus",
     "tabs"
   ],
-  "optional_permissions": [
-    "bookmarks"
-  ],
-  "version": "1.1.11"
+  "optional_permissions": ["bookmarks", "history"],
+  "version": "1.1.12"
 }
