@@ -216,3 +216,10 @@ browser.permissions.onAdded.addListener(handlePermissionChange);
 browser.permissions.onRemoved.addListener(handlePermissionChange);
 
 handlePermissionChange();
+
+// show the user the options page on first installation
+browser.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "install") {
+    browser.runtime.openOptionsPage();
+  }
+});

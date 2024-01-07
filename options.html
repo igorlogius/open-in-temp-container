@@ -6,21 +6,18 @@
 <body>
   <fieldset>
     <span>
-      <input type="number" id="deldelay" value="3000" min="3000" /> Container
-      deletion delay (ms)
+      <input type="checkbox" id="opennewtab" /> check to make the toolbar button
+      open a empty new tab in a temporary container instead of opening the
+      active tab url in a new temporary container tab
     </span>
   </fieldset>
-  <fieldset>
-    <span>
-      <input type="checkbox" id="opennewtab" /> Toolbar button opens a new tab
-    </span>
-  </fieldset>
+
   <fieldset>
     Select colors to use for temp containers (does not effect existing temp
     containers)<br />
     Hold CTRL to select or deselect multiple colors
     <br />
-    <select id="usecolors" multiple style="height: 55vh; width: 100%">
+    <select id="usecolors" multiple style="min-height: 13em; width: 100%">
       <option value="blue" selected>blue</option>
       <option value="turquoise" selected>turquoise</option>
       <option value="green" selected>green</option>
@@ -31,6 +28,27 @@
       <option value="purple" selected>purple</option>
     </select>
   </fieldset>
-  <fieldset></fieldset>
+
+  <fieldset>
+    <b>Notes: </b>
+    <ol>
+      <li>
+        Grant the "Read and modify bookmarks" permission to enable the bookmark
+        context menu entry
+      </li>
+      <li>
+        Grant the "Access browsing history" permission to enable automatic
+        history deletion for temp container tabs (experimental)
+      </li>
+    </ol>
+  </fieldset>
+
+  <fieldset>
+    <span>
+      <input type="number" id="deldelay" value="3000" min="3000" /> set temp
+      container deletion delay (ms) [debug]
+    </span>
+  </fieldset>
+
   <script src="options.js"></script>
 </body>

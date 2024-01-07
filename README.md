@@ -1,6 +1,7 @@
-Open a tab, page, link or bookmark in a new empty temporary container.
-
-More Infos about containers: https://support.mozilla.org/en-US/kb/how-use-firefox-containers
+Open a tab, page, link or bookmark in a new empty temporary container
+<br/>
+More Infos about containers:
+https://support.mozilla.org/en-US/kb/how-use-firefox-containers
 
 <b>Short Demo Video:</b>
 
