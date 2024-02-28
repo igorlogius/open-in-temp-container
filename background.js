@@ -5,6 +5,7 @@ let containerCleanupTimer = null;
 let opennewtab = false;
 let usecolors = [];
 let deldelay = 3000;
+let multiopen = 3;
 
 // array of all allowed container colors
 const allcolors = [
@@ -74,13 +75,6 @@ async function onTabRemoved() {
   }, deldelay);
 }
 
-function fixurl(url) {
-  if (url.startsWith("http") || url === "about:blank") {
-    return url;
-  }
-  return "about:blank";
-}
-
 async function createTempContainerTab(url) {
   let container = await createContainer({});
   let tabs = await browser.tabs.query({ currentWindow: true, active: true });
@@ -89,7 +83,6 @@ async function createTempContainerTab(url) {
   obj = {
     active: true,
     index: index,
-    //url: fixurl(url),
     cookieStoreId: container.cookieStoreId,
   };
   if (typeof url === "string" && url.startsWith("http")) {
@@ -139,6 +132,7 @@ async function syncMemory() {
     usecolors = allcolors;
   }
   deldelay = await getFromStorage("number", "deldelay", 3000);
+  multiopen = await getFromStorage("number", "multiopen", 3);
 }
 
 (async () => {
@@ -149,8 +143,6 @@ async function syncMemory() {
 // register listeners
 browser.tabs.onRemoved.addListener(onTabRemoved);
 browser.browserAction.onClicked.addListener(onBAClicked);
-//browser.runtime.onStartup.addListener(onTabRemoved);
-
 browser.storage.onChanged.addListener(syncMemory);
 
 browser.commands.onCommand.addListener(async (command) => {
@@ -167,12 +159,20 @@ browser.commands.onCommand.addListener(async (command) => {
       openNewTabInExistingContainer(atab.cookieStoreId);
     }
   }
+
+  if (command === "multiopen") {
+    let tabs = await browser.tabs.query({ currentWindow: true, active: true });
+    if (tabs.length > 0) {
+      const atab = tabs[0];
+      for (let i = 0; i < multiopen; i++) {
+        createTempContainerTab(atab.url);
+      }
+    }
+  }
 });
 
 async function handleUpdated(tabId, changeInfo, tabInfo) {
-  //if (changeInfo.status === "complete")
   if (changeInfo.url) {
-    console.debug(changeInfo.url);
     if (changeInfo.url.startsWith("http")) {
       try {
         const container = await browser.contextualIdentities.get(
@@ -206,10 +206,8 @@ var testPermissions1 = {
 async function handlePermissionChange(permissions) {
   if (await browser.permissions.contains(testPermissions1)) {
     await browser.tabs.onUpdated.addListener(handleUpdated);
-    console.debug("added handleUpdated listener");
   } else {
     await browser.tabs.onUpdated.removeListener(handleUpdated);
-    console.debug("removed handleUpdated listener");
   }
 }
 browser.permissions.onAdded.addListener(handlePermissionChange);
