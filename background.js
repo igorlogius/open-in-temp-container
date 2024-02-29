@@ -6,6 +6,7 @@ let opennewtab = false;
 let usecolors = [];
 let deldelay = 3000;
 let multiopen = 3;
+//let highlightedTabs = new Map(); // ids
 
 // array of all allowed container colors
 const allcolors = [
@@ -28,9 +29,13 @@ browser.menus.create({
   title: "Open in Temp Container(s)",
   contexts: ["link", "page", "tab", "bookmark"],
   onclick: async (clickdata, tab) => {
+    const openAsActive = !clickdata.modifiers.includes("Ctrl");
+
     if (clickdata.linkUrl) {
-      createTempContainerTab(clickdata.linkUrl);
+      // link
+      createTempContainerTab(clickdata.linkUrl, openAsActive);
     } else if (clickdata.bookmarkId) {
+      // bookmark or bookmark folder
       const bms = await browser.bookmarks.get(clickdata.bookmarkId);
       if (bms.length > 0) {
         const bm = bms[0];
@@ -41,19 +46,34 @@ browser.menus.create({
             clickdata.bookmarkId
           )) {
             if (c.url) {
-              createTempContainerTab(c.url);
+              createTempContainerTab(c.url, openAsActive);
             }
           }
         }
       }
     } else if (clickdata.frameUrl) {
-      createTempContainerTab(clickdata.frameUrl);
+      // frame
+      createTempContainerTab(clickdata.frameUrl, openAsActive);
     } else if (clickdata.srcUrl) {
+      // image or something with a src
       createTempContainerTab(clickdata.srcUrl);
-    } else if (clickdata.pageUrl) {
-      createTempContainerTab(clickdata.pageUrl);
-    } else if (tab.url) {
-      createTempContainerTab(tab.url);
+    } else {
+      // if tab.id is part of the highlighted group,
+      // open the highlighted group in temp containers
+      let hltabs = await browser.tabs.query({
+        currentWindow: true,
+        highlighted: true,
+      });
+      let hltids = hltabs.map((t) => t.id);
+      if (hltids.includes(tab.id)) {
+        for (const hlt of hltabs) {
+          createTempContainerTab(hlt.url, openAsActive);
+        }
+      } else {
+        // if the user clicked on a tab outside the highlighted group,
+        // lets assume he only wants to open that tab
+        createTempContainerTab(tab.url, openAsActive);
+      }
     }
   },
 });
@@ -83,13 +103,13 @@ async function onTabRemoved() {
   }, deldelay);
 }
 
-async function createTempContainerTab(url) {
+async function createTempContainerTab(url, activ = true) {
   let container = await createContainer({});
   let tabs = await browser.tabs.query({ currentWindow: true, active: true });
   const index = tabs.length > 0 ? tabs[0].index + 1 : -1;
 
   obj = {
-    active: true,
+    active: activ,
     index: index,
     cookieStoreId: container.cookieStoreId,
   };
@@ -210,6 +230,7 @@ var testPermissions1 = {
   permissions: ["history"],
 };
 
+// register listener depending on available permissions
 async function handlePermissionChange(permissions) {
   if (await browser.permissions.contains(testPermissions1)) {
     await browser.tabs.onUpdated.addListener(handleUpdated);
@@ -217,14 +238,21 @@ async function handlePermissionChange(permissions) {
     await browser.tabs.onUpdated.removeListener(handleUpdated);
   }
 }
-browser.permissions.onAdded.addListener(handlePermissionChange);
-browser.permissions.onRemoved.addListener(handlePermissionChange);
 
-handlePermissionChange();
+function handleHighlighted(highlightInfo) {
+  highlightedTabs.set(highlightInfo.windowId, highlightInfo.tabIds);
+}
 
 // show the user the options page on first installation
-browser.runtime.onInstalled.addListener((details) => {
+function handleInstalled(details) {
   if (details.reason === "install") {
     browser.runtime.openOptionsPage();
   }
-});
+}
+
+browser.runtime.onInstalled.addListener(handleInstalled);
+
+// history related
+browser.permissions.onRemoved.addListener(handlePermissionChange);
+browser.permissions.onAdded.addListener(handlePermissionChange);
+handlePermissionChange();
