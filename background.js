@@ -25,7 +25,7 @@ async function getFromStorage(type, id, fallback) {
 }
 
 browser.menus.create({
-  title: "Open in Temp Container",
+  title: "Open in Temp Container(s)",
   contexts: ["link", "page", "tab", "bookmark"],
   onclick: async (clickdata, tab) => {
     if (clickdata.linkUrl) {
@@ -36,6 +36,14 @@ browser.menus.create({
         const bm = bms[0];
         if (bm.url) {
           createTempContainerTab(bm.url);
+        } else {
+          for (const c of await browser.bookmarks.getChildren(
+            clickdata.bookmarkId
+          )) {
+            if (c.url) {
+              createTempContainerTab(c.url);
+            }
+          }
         }
       }
     } else if (clickdata.frameUrl) {
@@ -188,7 +196,6 @@ async function handleUpdated(tabId, changeInfo, tabInfo) {
               browser.history.deleteUrl({
                 url: changeInfo.url,
               });
-              console.debug("removed url", tabInfo.url);
             }, 2000);
           }
         }
