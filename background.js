@@ -3,11 +3,10 @@
 // cookieStoreIds of all managed containers
 let containerCleanupTimer = null;
 let opennewtab = false;
-let usecolors = [];
 let deldelay = 3000;
 let multiopen = 3;
-//let highlightedTabs = new Map(); // ids
-
+let mode = null;
+let regexList = null;
 // array of all allowed container colors
 const allcolors = [
   "blue",
@@ -19,6 +18,52 @@ const allcolors = [
   "pink",
   "purple",
 ];
+let usecolors = [];
+let historyPermission = {
+  permissions: ["history"],
+};
+
+function isOnRegexList(url) {
+  for (let i = 0; i < regexList.length; i++) {
+    if (regexList[i].test(url)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function buildRegExList() {
+  let selectors = await getFromStorage("object", "selectors", []);
+
+  const out = [];
+
+  selectors.forEach((e) => {
+    // check activ
+    if (typeof e.activ !== "boolean") {
+      return;
+    }
+    if (e.activ !== true) {
+      return;
+    }
+
+    // check url regex
+    if (typeof e.url_regex !== "string") {
+      return;
+    }
+    e.url_regex = e.url_regex.trim();
+    if (e.url_regex === "") {
+      return;
+    }
+
+    try {
+      out.push(new RegExp(e.url_regex));
+    } catch (e) {
+      return;
+    }
+  });
+
+  return out;
+}
 
 async function getFromStorage(type, id, fallback) {
   let tmp = await browser.storage.local.get(id);
@@ -108,7 +153,7 @@ async function createTempContainerTab(url, activ = true) {
   let tabs = await browser.tabs.query({ currentWindow: true, active: true });
   const index = tabs.length > 0 ? tabs[0].index + 1 : -1;
 
-  obj = {
+  let obj = {
     active: activ,
     index: index,
     cookieStoreId: container.cookieStoreId,
@@ -150,7 +195,7 @@ async function createContainer() {
   return container;
 }
 
-async function syncMemory() {
+async function onStorageChange() {
   opennewtab = await getFromStorage("boolean", "opennewtab", false);
   usecolors = await getFromStorage("object", "usecolors", allcolors);
   if (!Array.isArray(usecolors)) {
@@ -161,19 +206,56 @@ async function syncMemory() {
   }
   deldelay = await getFromStorage("number", "deldelay", 3000);
   multiopen = await getFromStorage("number", "multiopen", 3);
+
+  mode = !(await getFromStorage("boolean", "mode", false));
+  regexList = await buildRegExList();
 }
 
-(async () => {
-  await syncMemory();
-  setTimeout(onTabRemoved, deldelay);
-})();
+async function onTabUpdated(tabId, changeInfo, tabInfo) {
+  if (typeof changeInfo.url === "string") {
+    if (changeInfo.url.startsWith("http")) {
+      try {
+        const container = await browser.contextualIdentities.get(
+          tabInfo.cookieStoreId
+        );
+        //if (container !== null) { // spec error, doenst work because an error is thrown
+        // in a container
+        if (container.name.startsWith("Temp")) {
+          // delete history?
+          if (await browser.permissions.contains(historyPermission)) {
+            const visits = await browser.history.getVisits({
+              url: changeInfo.url,
+            });
+            if (visits.length < 5) {
+              setTimeout(() => {
+                browser.history.deleteUrl({
+                  url: changeInfo.url,
+                });
+              }, 2000);
+            }
+          }
+        }
+      } catch (e) {
+        //} else {
+        // not in a container
+        const _isOnList = isOnRegexList(changeInfo.url);
+        if ((!mode && !_isOnList) || (mode && _isOnList)) {
+          createTempContainerTab(changeInfo.url, true);
+          browser.tabs.remove(tabId);
+        }
+      }
+    }
+  }
+}
 
-// register listeners
-browser.tabs.onRemoved.addListener(onTabRemoved);
-browser.browserAction.onClicked.addListener(onBAClicked);
-browser.storage.onChanged.addListener(syncMemory);
+// show the user the options page on first installation
+function onInstall(details) {
+  if (details.reason === "install") {
+    browser.runtime.openOptionsPage();
+  }
+}
 
-browser.commands.onCommand.addListener(async (command) => {
+async function onCommand(command) {
   if (command === "opennewtab") {
     createTempContainerTab("about:newtab");
   }
@@ -197,62 +279,21 @@ browser.commands.onCommand.addListener(async (command) => {
       }
     }
   }
-});
-
-async function handleUpdated(tabId, changeInfo, tabInfo) {
-  if (changeInfo.url) {
-    if (changeInfo.url.startsWith("http")) {
-      try {
-        const container = await browser.contextualIdentities.get(
-          tabInfo.cookieStoreId
-        );
-        if (container.name.startsWith("Temp")) {
-          const visits = await browser.history.getVisits({
-            url: changeInfo.url,
-          });
-
-          if (visits.length < 5) {
-            setTimeout(() => {
-              browser.history.deleteUrl({
-                url: changeInfo.url,
-              });
-            }, 2000);
-          }
-        }
-      } catch (e) {
-        // noop
-      }
-    }
-  }
 }
 
-var testPermissions1 = {
-  permissions: ["history"],
-};
+(async () => {
+  browser.runtime.onInstalled.addListener(onInstall); // needs to be first
 
-// register listener depending on available permissions
-async function handlePermissionChange(permissions) {
-  if (await browser.permissions.contains(testPermissions1)) {
-    await browser.tabs.onUpdated.addListener(handleUpdated);
-  } else {
-    await browser.tabs.onUpdated.removeListener(handleUpdated);
-  }
-}
+  // init vars
+  await onStorageChange();
 
-function handleHighlighted(highlightInfo) {
-  highlightedTabs.set(highlightInfo.windowId, highlightInfo.tabIds);
-}
+  // trigger inital cleanup, for browser restart
+  setTimeout(onTabRemoved, deldelay);
 
-// show the user the options page on first installation
-function handleInstalled(details) {
-  if (details.reason === "install") {
-    browser.runtime.openOptionsPage();
-  }
-}
-
-browser.runtime.onInstalled.addListener(handleInstalled);
-
-// history related
-browser.permissions.onRemoved.addListener(handlePermissionChange);
-browser.permissions.onAdded.addListener(handlePermissionChange);
-handlePermissionChange();
+  // register listeners
+  browser.browserAction.onClicked.addListener(onBAClicked);
+  browser.commands.onCommand.addListener(onCommand);
+  browser.storage.onChanged.addListener(onStorageChange);
+  browser.tabs.onRemoved.addListener(onTabRemoved);
+  browser.tabs.onUpdated.addListener(onTabUpdated);
+})();
