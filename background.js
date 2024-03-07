@@ -3,7 +3,7 @@
 // cookieStoreIds of all managed containers
 let containerCleanupTimer = null;
 let opennewtab = false;
-let deldelay = 3000;
+let deldelay = 10000; // delay until Tmp Containers and History Entries are removed
 let multiopen = 3;
 let mode = null;
 let regexList = null;
@@ -161,7 +161,7 @@ async function createTempContainerTab(url, activ = true) {
   if (typeof url === "string" && url.startsWith("http")) {
     obj["url"] = url;
   }
-  browser.tabs.create(obj);
+  return browser.tabs.create(obj);
 }
 
 async function openNewTabInExistingContainer(cookieStoreId) {
@@ -231,7 +231,7 @@ async function onTabUpdated(tabId, changeInfo, tabInfo) {
                 browser.history.deleteUrl({
                   url: changeInfo.url,
                 });
-              }, 2000);
+              }, deldelay);
             }
           }
         }
@@ -240,7 +240,7 @@ async function onTabUpdated(tabId, changeInfo, tabInfo) {
         // not in a container
         const _isOnList = isOnRegexList(changeInfo.url);
         if ((!mode && !_isOnList) || (mode && _isOnList)) {
-          createTempContainerTab(changeInfo.url, true);
+          await createTempContainerTab(changeInfo.url, true);
           browser.tabs.remove(tabId);
         }
       }
@@ -296,4 +296,45 @@ async function onCommand(command) {
   browser.storage.onChanged.addListener(onStorageChange);
   browser.tabs.onRemoved.addListener(onTabRemoved);
   browser.tabs.onUpdated.addListener(onTabUpdated);
+
+  async function onBeforeNavigate(details) {
+    if (typeof details.url === "string") {
+      if (details.url.startsWith("http")) {
+        try {
+          const tabInfo = await browser.tabs.get(details.tabId);
+          const container = await browser.contextualIdentities.get(
+            tabInfo.cookieStoreId
+          );
+          //if (container !== null) { // spec error, doenst work because an error is thrown
+          // in a container
+          if (container.name.startsWith("Temp")) {
+            // delete history?
+            if (await browser.permissions.contains(historyPermission)) {
+              const visits = await browser.history.getVisits({
+                url: details.url,
+              });
+              if (visits.length < 5) {
+                setTimeout(() => {
+                  browser.history.deleteUrl({
+                    url: details.url,
+                  });
+                }, deldelay);
+              }
+            }
+          }
+        } catch (e) {
+          /*
+          //} else {
+          // not in a container
+          const _isOnList = isOnRegexList(details.url);
+          if ((!mode && !_isOnList) || (mode && _isOnList)) {
+            await createTempContainerTab(details.url, true);
+            browser.tabs.remove(details.tabId);
+          }
+            */
+        }
+      }
+    }
+  }
+  browser.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
 })();

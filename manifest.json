@@ -27,6 +27,7 @@
     "page": "options.html"
   },
   "permissions": [
+    "webNavigation",
     "storage",
     "contextualIdentities",
     "cookies",
@@ -34,5 +35,5 @@
     "tabs"
   ],
   "optional_permissions": ["bookmarks", "history"],
-  "version": "1.1.18"
+  "version": "1.1.19"
 }
