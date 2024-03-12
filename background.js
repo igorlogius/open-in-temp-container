@@ -323,7 +323,8 @@ async function onCommand(command) {
             }
           }
         } catch (e) {
-          /*
+          /* This is required for the `Secure Site not available` to work */
+          /* the onTabUpdated doenst seem to get the http url early enough */
           //} else {
           // not in a container
           const _isOnList = isOnRegexList(details.url);
@@ -331,7 +332,7 @@ async function onCommand(command) {
             await createTempContainerTab(details.url, true);
             browser.tabs.remove(details.tabId);
           }
-            */
+          /**/
         }
       }
     }
