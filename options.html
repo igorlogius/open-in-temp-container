@@ -13,6 +13,7 @@
 
   <fieldset>
     Select colors to use for temporary containers
+    <abbr title="Hold CTRL to select or deselect multiple colors">(?)</abbr>
     <br />
     <select id="usecolors" multiple style="min-height: 13em; width: 100%">
       <option value="blue" selected>blue</option>
@@ -27,23 +28,32 @@
   </fieldset>
 
   <fieldset>
-    <b>Notes: </b>
-    <ol>
+    <b>Notes:</b>
+    <ul>
       <li>
-        Grant the "Read and modify bookmarks" permission to enable the bookmark
-        context menu entry
+        This addon has configurable shortcuts
+        <ol>
+          <li>Toolbar button action</li>
+          <li>Open newtab in temp container</li>
+          <li>Open a newtab in the same container as current tab</li>
+          <li>Open current tab url in multiple temp container</li>
+        </ol>
       </li>
       <li>
-        Grant the "Access browsing history" permission to enable automatic
-        history deletion for temp container tabs (experimental)
+        To enable the bookmark context menu entry, grant the "Read and modify
+        bookmarks" permission
       </li>
-    </ol>
+      <li>
+        To enable automatic history deletion, grant the "Access browsing
+        history" permission
+      </li>
+    </ul>
   </fieldset>
 
   <fieldset>
     <span>
-      <input type="number" id="multiopen" value="3" min="0" max="10" /> multi
-      open shortcut parameter
+      <input type="number" id="multiopen" value="3" min="0" max="10" />
+      Multi-Open parameter (Shortcut parameter)
     </span>
   </fieldset>
 

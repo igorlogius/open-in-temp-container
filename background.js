@@ -242,12 +242,11 @@ async function onBeforeNavigate(details) {
 
 function cleanupHistory() {
   console.debug(historyCleanUpQueue);
-    const len = historyCleanUpQueue.length;
+  const len = historyCleanUpQueue.length;
 
-    const its = (len > 1)?len/2:1;
+  const its = len > 1 ? len / 2 : 1;
 
-    for(let i=0;i < its;i++){
-
+  for (let i = 0; i < its; i++) {
     try {
       browser.history.deleteUrl({
         url: historyCleanUpQueue.shift(),
@@ -255,9 +254,9 @@ function cleanupHistory() {
     } catch (e) {
       //noop
     }
-        }
+  }
 
-   setToStorage("historyCleanUpQueue", historyCleanUpQueue);
+  setToStorage("historyCleanUpQueue", historyCleanUpQueue);
 }
 
 async function handlePermissionChange() {
