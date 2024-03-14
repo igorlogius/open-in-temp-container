@@ -6,16 +6,13 @@
 <body>
   <fieldset>
     <span>
-      <input type="checkbox" id="opennewtab" /> check to make the toolbar button
-      open a empty new tab in a temporary container instead of opening the
-      active tab url in a new temporary container tab
+      <input type="checkbox" id="opennewtab" /> toolbar button opens empty
+      temporary container
     </span>
   </fieldset>
 
   <fieldset>
-    Select colors to use for temp containers (does not effect existing temp
-    containers)<br />
-    Hold CTRL to select or deselect multiple colors
+    Select colors to use for temporary containers
     <br />
     <select id="usecolors" multiple style="min-height: 13em; width: 100%">
       <option value="blue" selected>blue</option>
@@ -49,59 +46,6 @@
       open shortcut parameter
     </span>
   </fieldset>
-
-  <fieldset>
-    <span>
-      <input type="number" id="deldelay" value="3000" min="3000" /> set temp
-      container deletion delay (ms) [debug]
-    </span>
-  </fieldset>
-
-  <form id="mainForm" accept-charset="utf-8">
-    <input type="submit" value="Save list changes" />
-    <input
-      id="impbtn_wrapper"
-      type="button"
-      name="impbtn"
-      value="Import Rules"
-    />
-    <input
-      id="impbtn"
-      type="file"
-      name="impbtn"
-      value=""
-      style="display: none"
-    />
-    <input id="expbtn" type="button" name="impbtn" value="Export Rules" />
-    <span>Mode:<input id="mode" type="checkbox" /></span>
-    <h3>RegEx-URL-Matchers</h3>
-    <small>
-      <ul>
-        <li>
-          unchecked: (MANUAL-TEMP) only tabs with URLs that match with any entry
-          on the list, will automatically be put into a temp container
-        </li>
-        <li>
-          checked: (AUTO-TEMP) all tabs, except the ones with URLs that match
-          with any entry will open in temp containers
-        </li>
-      </ul>
-      <ul>
-        <li>
-          Example 1: <code>^https:\/\/www\.twich\.tv.*</code>, matches all
-          twitch.tv sites
-        </li>
-        <li>
-          Example 2: <code>^https:\/\/www\.youtube\.com.*</code>, matches all
-          youtube.com sites
-        </li>
-      </ul>
-    </small>
-
-    <table id="mainTable" border="1" style="width: 100%">
-      <tbody id="mainTableBody" />
-    </table>
-  </form>
 
   <script src="options.js"></script>
 </body>

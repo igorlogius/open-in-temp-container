@@ -1,12 +1,13 @@
 /* global browser */
 
 // cookieStoreIds of all managed containers
+let historyPermissionEnabled = false;
+let intId = null;
+let historyCleanUpQueue = [];
 let containerCleanupTimer = null;
 let opennewtab = false;
-let deldelay = 10000; // delay until Tmp Containers and History Entries are removed
+let deldelay = 30000; // delay until Tmp Containers and History Entries are removed
 let multiopen = 3;
-let mode = null;
-let regexList = null;
 // array of all allowed container colors
 const allcolors = [
   "blue",
@@ -19,55 +20,19 @@ const allcolors = [
   "purple",
 ];
 let usecolors = [];
-let historyPermission = {
+const historyPermission = {
   permissions: ["history"],
 };
-
-function isOnRegexList(url) {
-  for (let i = 0; i < regexList.length; i++) {
-    if (regexList[i].test(url)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-async function buildRegExList() {
-  let selectors = await getFromStorage("object", "selectors", []);
-
-  const out = [];
-
-  selectors.forEach((e) => {
-    // check activ
-    if (typeof e.activ !== "boolean") {
-      return;
-    }
-    if (e.activ !== true) {
-      return;
-    }
-
-    // check url regex
-    if (typeof e.url_regex !== "string") {
-      return;
-    }
-    e.url_regex = e.url_regex.trim();
-    if (e.url_regex === "") {
-      return;
-    }
-
-    try {
-      out.push(new RegExp(e.url_regex));
-    } catch (e) {
-      return;
-    }
-  });
-
-  return out;
-}
 
 async function getFromStorage(type, id, fallback) {
   let tmp = await browser.storage.local.get(id);
   return typeof tmp[id] === type ? tmp[id] : fallback;
+}
+
+async function setToStorage(id, value) {
+  let obj = {};
+  obj[id] = value;
+  return browser.storage.local.set(obj);
 }
 
 browser.menus.create({
@@ -204,48 +169,14 @@ async function onStorageChange() {
   if (usecolors.length < 1) {
     usecolors = allcolors;
   }
-  deldelay = await getFromStorage("number", "deldelay", 3000);
+  //deldelay = await getFromStorage("number", "deldelay", 30000);
   multiopen = await getFromStorage("number", "multiopen", 3);
 
-  mode = !(await getFromStorage("boolean", "mode", false));
-  regexList = await buildRegExList();
-}
-
-async function onTabUpdated(tabId, changeInfo, tabInfo) {
-  if (typeof changeInfo.url === "string") {
-    if (changeInfo.url.startsWith("http")) {
-      try {
-        const container = await browser.contextualIdentities.get(
-          tabInfo.cookieStoreId
-        );
-        //if (container !== null) { // spec error, doenst work because an error is thrown
-        // in a container
-        if (container.name.startsWith("Temp")) {
-          // delete history?
-          if (await browser.permissions.contains(historyPermission)) {
-            const visits = await browser.history.getVisits({
-              url: changeInfo.url,
-            });
-            if (visits.length < 5) {
-              setTimeout(() => {
-                browser.history.deleteUrl({
-                  url: changeInfo.url,
-                });
-              }, deldelay);
-            }
-          }
-        }
-      } catch (e) {
-        //} else {
-        // not in a container
-        const _isOnList = isOnRegexList(changeInfo.url);
-        if ((!mode && !_isOnList) || (mode && _isOnList)) {
-          await createTempContainerTab(changeInfo.url, true);
-          browser.tabs.remove(tabId);
-        }
-      }
-    }
-  }
+  historyCleanUpQueue = await getFromStorage(
+    "object",
+    "historyCleanUpQueue",
+    []
+  );
 }
 
 // show the user the options page on first installation
@@ -281,11 +212,71 @@ async function onCommand(command) {
   }
 }
 
+async function onBeforeNavigate(details) {
+  if (!historyPermissionEnabled) {
+    return;
+  }
+  if (historyCleanUpQueue.includes(details.url)) {
+    return;
+  }
+  if (typeof details.url !== "string") {
+    return;
+  }
+  if (!details.url.startsWith("http")) {
+    return;
+  }
+  try {
+    const tabInfo = await browser.tabs.get(details.tabId);
+    const container = await browser.contextualIdentities.get(
+      tabInfo.cookieStoreId
+    );
+    // in a container
+    if (container.name.startsWith("Temp")) {
+      historyCleanUpQueue.push(details.url);
+      setToStorage("historyCleanUpQueue", historyCleanUpQueue);
+    }
+  } catch (e) {
+    // not in a container
+  }
+}
+
+function cleanupHistory() {
+  console.debug(historyCleanUpQueue);
+    const len = historyCleanUpQueue.length;
+
+    const its = (len > 1)?len/2:1;
+
+    for(let i=0;i < its;i++){
+
+    try {
+      browser.history.deleteUrl({
+        url: historyCleanUpQueue.shift(),
+      });
+    } catch (e) {
+      //noop
+    }
+        }
+
+   setToStorage("historyCleanUpQueue", historyCleanUpQueue);
+}
+
+async function handlePermissionChange() {
+  historyPermissionEnabled = await browser.permissions.contains(
+    historyPermission
+  );
+  clearInterval(intId);
+  if (historyPermissionEnabled) {
+    intId = setInterval(cleanupHistory, deldelay);
+  }
+}
+
 (async () => {
   browser.runtime.onInstalled.addListener(onInstall); // needs to be first
 
   // init vars
   await onStorageChange();
+
+  await handlePermissionChange();
 
   // trigger inital cleanup, for browser restart
   setTimeout(onTabRemoved, deldelay);
@@ -295,47 +286,22 @@ async function onCommand(command) {
   browser.commands.onCommand.addListener(onCommand);
   browser.storage.onChanged.addListener(onStorageChange);
   browser.tabs.onRemoved.addListener(onTabRemoved);
-  browser.tabs.onUpdated.addListener(onTabUpdated);
 
-  async function onBeforeNavigate(details) {
-    if (typeof details.url === "string") {
-      if (details.url.startsWith("http")) {
-        try {
-          const tabInfo = await browser.tabs.get(details.tabId);
-          const container = await browser.contextualIdentities.get(
-            tabInfo.cookieStoreId
-          );
-          //if (container !== null) { // spec error, doenst work because an error is thrown
-          // in a container
-          if (container.name.startsWith("Temp")) {
-            // delete history?
-            if (await browser.permissions.contains(historyPermission)) {
-              const visits = await browser.history.getVisits({
-                url: details.url,
-              });
-              if (visits.length < 5) {
-                setTimeout(() => {
-                  browser.history.deleteUrl({
-                    url: details.url,
-                  });
-                }, deldelay);
-              }
-            }
-          }
-        } catch (e) {
-          /* This is required for the `Secure Site not available` to work */
-          /* the onTabUpdated doenst seem to get the http url early enough */
-          //} else {
-          // not in a container
-          const _isOnList = isOnRegexList(details.url);
-          if ((!mode && !_isOnList) || (mode && _isOnList)) {
-            await createTempContainerTab(details.url, true);
-            browser.tabs.remove(details.tabId);
-          }
-          /**/
-        }
-      }
-    }
-  }
   browser.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
+  browser.webNavigation.onHistoryStateUpdated.addListener(onBeforeNavigate);
+  browser.webNavigation.onReferenceFragmentUpdated.addListener(
+    onBeforeNavigate
+  );
+  browser.webNavigation.onErrorOccurred.addListener(onBeforeNavigate);
+  browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
+    if (changeInfo.url) {
+      onBeforeNavigate({
+        tabId,
+        url: changeInfo.url,
+      });
+    }
+  });
+
+  browser.permissions.onAdded.addListener(handlePermissionChange);
+  browser.permissions.onRemoved.addListener(handlePermissionChange);
 })();
