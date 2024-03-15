@@ -1,6 +1,7 @@
 /* global browser */
 
 // cookieStoreIds of all managed containers
+let mode = null;
 let historyPermissionEnabled = false;
 let intId = null;
 let historyCleanUpQueue = [];
@@ -8,6 +9,8 @@ let containerCleanupTimer = null;
 let opennewtab = false;
 let deldelay = 30000; // delay until Tmp Containers and History Entries are removed
 let multiopen = 3;
+let regexList = null;
+
 // array of all allowed container colors
 const allcolors = [
   "blue",
@@ -23,6 +26,48 @@ let usecolors = [];
 const historyPermission = {
   permissions: ["history"],
 };
+
+function isOnRegexList(url) {
+  for (let i = 0; i < regexList.length; i++) {
+    if (regexList[i].test(url)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function buildRegExList() {
+  let selectors = await getFromStorage("object", "selectors", []);
+
+  const out = [];
+
+  selectors.forEach((e) => {
+    // check activ
+    if (typeof e.activ !== "boolean") {
+      return;
+    }
+    if (e.activ !== true) {
+      return;
+    }
+
+    // check url regex
+    if (typeof e.url_regex !== "string") {
+      return;
+    }
+    e.url_regex = e.url_regex.trim();
+    if (e.url_regex === "") {
+      return;
+    }
+
+    try {
+      out.push(new RegExp(e.url_regex));
+    } catch (e) {
+      return;
+    }
+  });
+
+  return out;
+}
 
 async function getFromStorage(type, id, fallback) {
   let tmp = await browser.storage.local.get(id);
@@ -169,8 +214,11 @@ async function onStorageChange() {
   if (usecolors.length < 1) {
     usecolors = allcolors;
   }
-  //deldelay = await getFromStorage("number", "deldelay", 30000);
   multiopen = await getFromStorage("number", "multiopen", 3);
+
+  mode = !(await getFromStorage("boolean", "mode", false));
+
+  regexList = await buildRegExList();
 
   historyCleanUpQueue = await getFromStorage(
     "object",
@@ -213,12 +261,6 @@ async function onCommand(command) {
 }
 
 async function onBeforeNavigate(details) {
-  if (!historyPermissionEnabled) {
-    return;
-  }
-  if (historyCleanUpQueue.includes(details.url)) {
-    return;
-  }
   if (typeof details.url !== "string") {
     return;
   }
@@ -232,16 +274,26 @@ async function onBeforeNavigate(details) {
     );
     // in a container
     if (container.name.startsWith("Temp")) {
+      if (!historyPermissionEnabled) {
+        return;
+      }
+      if (historyCleanUpQueue.includes(details.url)) {
+        return;
+      }
       historyCleanUpQueue.push(details.url);
       setToStorage("historyCleanUpQueue", historyCleanUpQueue);
     }
   } catch (e) {
     // not in a container
+    const _isOnList = isOnRegexList(details.url);
+    if ((!mode && !_isOnList) || (mode && _isOnList)) {
+      await createTempContainerTab(details.url, true);
+      browser.tabs.remove(details.tabId);
+    }
   }
 }
 
 function cleanupHistory() {
-  console.debug(historyCleanUpQueue);
   const len = historyCleanUpQueue.length;
 
   const its = len > 1 ? len / 2 : 1;

@@ -6,14 +6,16 @@
 <body>
   <fieldset>
     <span>
-      <input type="checkbox" id="opennewtab" /> toolbar button opens empty
-      temporary container
+      <input type="checkbox" id="opennewtab" /> check to make the toolbar button
+      open a empty new tab in a temporary container instead of opening the
+      active tab url in a new temporary container tab
     </span>
   </fieldset>
 
   <fieldset>
-    Select colors to use for temporary containers
-    <abbr title="Hold CTRL to select or deselect multiple colors">(?)</abbr>
+    Select colors to use for temp containers (does not effect existing temp
+    containers)<br />
+    Hold CTRL to select or deselect multiple colors
     <br />
     <select id="usecolors" multiple style="min-height: 13em; width: 100%">
       <option value="blue" selected>blue</option>
@@ -28,34 +30,72 @@
   </fieldset>
 
   <fieldset>
-    <b>Notes:</b>
-    <ul>
+    <b>Notes: </b>
+    <ol>
       <li>
-        This addon has configurable shortcuts
-        <ol>
-          <li>Toolbar button action</li>
-          <li>Open newtab in temp container</li>
-          <li>Open a newtab in the same container as current tab</li>
-          <li>Open current tab url in multiple temp container</li>
-        </ol>
+        Grant the "Read and modify bookmarks" permission to enable the bookmark
+        context menu entry
       </li>
       <li>
-        To enable the bookmark context menu entry, grant the "Read and modify
-        bookmarks" permission
+        Grant the "Access browsing history" permission to enable automatic
+        history deletion for temp container tabs (experimental)
       </li>
-      <li>
-        To enable automatic history deletion, grant the "Access browsing
-        history" permission
-      </li>
-    </ul>
+    </ol>
   </fieldset>
 
   <fieldset>
     <span>
-      <input type="number" id="multiopen" value="3" min="0" max="10" />
-      Multi-Open parameter (Shortcut parameter)
+      <input type="number" id="multiopen" value="3" min="0" max="10" /> multi
+      open shortcut parameter
     </span>
   </fieldset>
+
+  <form id="mainForm" accept-charset="utf-8">
+    <fieldset>
+      <span
+        >Toggle between automatic(checked) and manual (unchecked) mode:
+        <input id="mode" type="checkbox" />
+      </span>
+    </fieldset>
+
+    <fieldset>
+      <h3 style="">URL RegEx List</h3>
+
+      <small>
+        <p>
+          in manual mode urls matching with any of these regexs will open in a
+          temp container, in automatic mode, any url matching with these regexs
+          will NOT open in a temp container, but everything else will
+        </p>
+        <b>Examples:</b>
+        <ul>
+          <li><code>^https:\/\/www\.youtube\.com.*</code>,</li>
+          <li>
+            <code>^https:\/\/www\.twitch\.tv.*</code>
+          </li>
+        </ul>
+      </small>
+      <input type="submit" value="Save list changes" />
+      <input
+        id="impbtn_wrapper"
+        type="button"
+        name="impbtn"
+        value="Import Rules"
+      />
+      <input
+        id="impbtn"
+        type="file"
+        name="impbtn"
+        value=""
+        style="display: none"
+      />
+      <input id="expbtn" type="button" name="impbtn" value="Export Rules" />
+
+      <table id="mainTable" border="1" style="width: 100%">
+        <tbody id="mainTableBody"></tbody>
+      </table>
+    </fieldset>
+  </form>
 
   <script src="options.js"></script>
 </body>
