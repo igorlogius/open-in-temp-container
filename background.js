@@ -82,13 +82,19 @@ async function setToStorage(id, value) {
 
 browser.menus.create({
   title: "Open in Temp Container(s)",
-  contexts: ["link", "page", "tab", "bookmark"],
+  contexts: ["link", "selection", "tab", "bookmark"],
   onclick: async (clickdata, tab) => {
     const openAsActive = !clickdata.modifiers.includes("Ctrl");
 
     if (clickdata.linkUrl) {
       // link
       createTempContainerTab(clickdata.linkUrl, openAsActive);
+    } else if (clickdata.selectionText) {
+      const links = await browser.tabs.sendMessage(tab.id, "getLinks");
+
+      for (const link of links) {
+        createTempContainerTab(link, false);
+      }
     } else if (clickdata.bookmarkId) {
       // bookmark or bookmark folder
       const bms = await browser.bookmarks.get(clickdata.bookmarkId);
