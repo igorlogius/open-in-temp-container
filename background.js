@@ -90,7 +90,16 @@ browser.menus.create({
       // link
       createTempContainerTab(clickdata.linkUrl, openAsActive);
     } else if (clickdata.selectionText) {
-      const links = await browser.tabs.sendMessage(tab.id, "getLinks");
+      const ret = await browser.tabs.executeScript({
+        code: `
+          selection = getSelection();
+             [...document.links]
+          .filter((anchor) => selection.containsNode(anchor, true))
+        .map((link) => link.href );
+          `,
+      });
+
+      const links = ret[0];
 
       for (const link of links) {
         createTempContainerTab(link, false);

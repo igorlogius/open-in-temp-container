@@ -17,14 +17,6 @@
       "description": "Open current tab url in multiple temp container"
     }
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "all_frames": true,
-      "js": ["content.js"],
-      "run_at": "document_start"
-    }
-  ],
   "description": "Open the page,tab,link or bookmark in a new temporary container tab",
   "icons": {
     "96": "icon.png"
@@ -35,6 +27,7 @@
     "page": "options.html"
   },
   "permissions": [
+    "activeTab",
     "webNavigation",
     "storage",
     "contextualIdentities",
@@ -43,5 +36,5 @@
     "tabs"
   ],
   "optional_permissions": ["bookmarks", "history"],
-  "version": "1.1.24"
+  "version": "1.1.25"
 }
