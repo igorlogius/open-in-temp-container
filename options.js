@@ -7,7 +7,6 @@ function onChange(evt) {
   let value = el.type === "checkbox" ? el.checked : el.value;
   let obj = {};
 
-  //console.log(id, value, el.type);
   if (value === "") {
     return;
   }
@@ -30,7 +29,7 @@ function onChange(evt) {
   browser.storage.local.set(obj).catch(console.error);
 }
 
-["mode", "multiopen", "opennewtab"].map((id) => {
+["multiopen"].map((id) => {
   browser.storage.local
     .get(id)
     .then((obj) => {
@@ -51,7 +50,7 @@ function onChange(evt) {
   el.addEventListener("input", onChange);
 });
 
-["usecolors"].map((id) => {
+["usecolors", "toolbarAction", "listmode"].map((id) => {
   browser.storage.local
     .get(id)
     .then((obj) => {
@@ -71,9 +70,12 @@ function onChange(evt) {
     const selectedItems = Array.from(el.selectedOptions).map(
       (option) => option.value
     );
-    //console.debug(selectedItems);
     let obj = {};
-    obj[id] = selectedItems;
+    if (el.hasAttribute("multiple")) {
+      obj[id] = selectedItems;
+    } else {
+      obj[id] = selectedItems[0];
+    }
     browser.storage.local.set(obj).catch(console.error);
   });
 });
@@ -175,7 +177,19 @@ async function restoreOptions() {
   });
   var res = await browser.storage.local.get("selectors");
   if (!Array.isArray(res.selectors)) {
-    return;
+    res = {
+      selectors: [
+        {
+          activ: false,
+          url_regex: "^https:\\/\\/twitch\\.tv.*",
+        },
+
+        {
+          activ: false,
+          url_regex: "^https:\\/\\/www\\.youtube\\.com\\/watch\\/.*",
+        },
+      ],
+    };
   }
   res.selectors.forEach((selector) => {
     selector.action = "delete";

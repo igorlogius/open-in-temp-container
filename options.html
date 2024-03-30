@@ -1,22 +1,34 @@
 <!DOCTYPE html>
 <head>
   <meta charset="utf-8" />
-  <title></title>
+  <style>
+    body {
+      background-color: lightgrey;
+    }
+  </style>
 </head>
 <body>
   <fieldset>
-    <span>
-      <input type="checkbox" id="opennewtab" /> check to make the toolbar button
-      open a empty new tab in a temporary container instead of opening the
-      active tab url in a new temporary container tab
-    </span>
+    <b>Toolbar button action:</b>
+    <select id="toolbarAction">
+      <option value="reopen">Open current tab URL in a temp container</option>
+      <option value="newtab">Open a new tab in a temp container</option>
+    </select>
   </fieldset>
 
   <fieldset>
-    Select colors to use for temp containers (does not effect existing temp
-    containers)<br />
-    Hold CTRL to select or deselect multiple colors
-    <br />
+    <h4>Addional Features</h4>
+    <ul>
+      <li>"Read and modify bookmarks", enables the bookmark context entry</li>
+      <li>"Access browsing history", enables automatic history deletion</li>
+    </ul>
+  </fieldset>
+
+  <fieldset>
+    <h4>
+      Container colors
+      <abbr title="Hold CTRL to select or deselect multiple colors">(?)</abbr>
+    </h4>
     <select id="usecolors" multiple style="min-height: 13em; width: 100%">
       <option value="blue" selected>blue</option>
       <option value="turquoise" selected>turquoise</option>
@@ -30,66 +42,51 @@
   </fieldset>
 
   <fieldset>
-    <b>Notes: </b>
-    <ol>
-      <li>
-        Grant the "Read and modify bookmarks" permission to enable the bookmark
-        context menu entry
-      </li>
-      <li>
-        Grant the "Access browsing history" permission to enable automatic
-        history deletion for temp container tabs (experimental)
-      </li>
-    </ol>
-  </fieldset>
-
-  <fieldset>
-    <span>
-      <input type="number" id="multiopen" value="3" min="0" max="10" /> multi
-      open shortcut parameter
-    </span>
+    <b>Multi-Open shortcut argument:</b>
+    <input type="number" id="multiopen" value="3" min="0" max="10" />
   </fieldset>
 
   <form id="mainForm" accept-charset="utf-8">
     <fieldset>
-      <span
-        >Toggle between automatic(checked) and manual (unchecked) mode:
-        <input id="mode" type="checkbox" />
-      </span>
-    </fieldset>
-
-    <fieldset>
-      <h3 style="">URL RegEx List</h3>
-
-      <small>
-        <p>
-          in manual mode urls matching with any of these regexs will open in a
-          temp container, in automatic mode, any url matching with these regexs
-          will NOT open in a temp container, but everything else will
-        </p>
-        <b>Examples:</b>
-        <ul>
-          <li><code>^https:\/\/www\.youtube\.com.*</code>,</li>
-          <li>
-            <code>^https:\/\/www\.twitch\.tv.*</code>
-          </li>
-        </ul>
-      </small>
-      <input type="submit" value="Save list changes" />
-      <input
-        id="impbtn_wrapper"
-        type="button"
-        name="impbtn"
-        value="Import Rules"
-      />
-      <input
-        id="impbtn"
-        type="file"
-        name="impbtn"
-        value=""
-        style="display: none"
-      />
-      <input id="expbtn" type="button" name="impbtn" value="Export Rules" />
+      <h4>Operation Mode</h4>
+      <fieldset>
+        <select id="listmode" style="width: 100%; text-align: center">
+          <option value="include">
+            Open only URLs matching in temp container
+          </option>
+          <option value="exclude">
+            Open everything not matching in a temp container
+          </option>
+        </select>
+      </fieldset>
+      <fieldset>
+        <input
+          id="impbtn_wrapper"
+          type="button"
+          name="impbtn"
+          value="Import"
+          style="margin-left: 1%; width: 32%; text-align: center"
+        />
+        <input
+          id="impbtn"
+          type="file"
+          name="impbtn"
+          value=""
+          style="display: none"
+        />
+        <input
+          type="submit"
+          value="Save"
+          style="margin-left: 0%; width: 32%; text-align: center"
+        />
+        <input
+          id="expbtn"
+          type="button"
+          name="impbtn"
+          value="Export"
+          style="margin-left: 0%; width: 32%; text-align: center"
+        />
+      </fieldset>
 
       <table id="mainTable" border="1" style="width: 100%">
         <tbody id="mainTableBody"></tbody>

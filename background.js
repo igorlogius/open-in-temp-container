@@ -1,12 +1,12 @@
 /* global browser */
 
 // cookieStoreIds of all managed containers
-let mode = null;
+let list = null;
 let historyPermissionEnabled = false;
 let intId = null;
 let historyCleanUpQueue = [];
 let containerCleanupTimer = null;
-let opennewtab = false;
+let toolbarAction = "";
 let deldelay = 30000; // delay until Tmp Containers and History Entries are removed
 let multiopen = 3;
 let regexList = null;
@@ -204,7 +204,7 @@ async function openNewTabInExistingContainer(cookieStoreId) {
 }
 
 function onBAClicked(tab) {
-  if (opennewtab) {
+  if (toolbarAction === "newtab") {
     createTempContainerTab();
   } else {
     createTempContainerTab(tab.url);
@@ -225,7 +225,7 @@ async function createContainer() {
 }
 
 async function onStorageChange() {
-  opennewtab = await getFromStorage("boolean", "opennewtab", false);
+  toolbarAction = await getFromStorage("boolean", "toolbarAction", "reopen");
   usecolors = await getFromStorage("object", "usecolors", allcolors);
   if (!Array.isArray(usecolors)) {
     usecolors = allcolors;
@@ -235,7 +235,7 @@ async function onStorageChange() {
   }
   multiopen = await getFromStorage("number", "multiopen", 3);
 
-  mode = !(await getFromStorage("boolean", "mode", false));
+  listmode = await getFromStorage("string", "listmode", "include");
 
   regexList = await buildRegExList();
 
@@ -305,7 +305,10 @@ async function onBeforeNavigate(details) {
   } catch (e) {
     // not in a container
     const _isOnList = isOnRegexList(details.url);
-    if ((!mode && !_isOnList) || (mode && _isOnList)) {
+    if (
+      (listmode === "exclude" && !_isOnList) ||
+      (listmode === "include" && _isOnList)
+    ) {
       await createTempContainerTab(details.url, true);
       browser.tabs.remove(details.tabId);
     }
