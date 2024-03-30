@@ -94,8 +94,12 @@ browser.menus.create({
         code: `
           selection = getSelection();
           out = new Set([...document.links]
-           .filter((anchor) => selection.containsNode(anchor, true))
-           .map((link) => link.href ));
+           .filter((anchor) => (
+                    selection.containsNode(anchor, true)
+                    && typeof anchor.href === 'string'
+                    && anchor.href.trim() !== ''
+                )
+            ).map((link) => link.href.trim() ));
           `,
       });
 
