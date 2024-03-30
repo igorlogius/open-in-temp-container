@@ -93,9 +93,9 @@ browser.menus.create({
       const ret = await browser.tabs.executeScript({
         code: `
           selection = getSelection();
-             [...document.links]
-          .filter((anchor) => selection.containsNode(anchor, true))
-        .map((link) => link.href );
+          out = new Set([...document.links]
+           .filter((anchor) => selection.containsNode(anchor, true))
+           .map((link) => link.href ));
           `,
       });
 
