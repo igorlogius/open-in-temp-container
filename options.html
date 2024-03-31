@@ -9,19 +9,22 @@
 </head>
 <body>
   <fieldset>
-    <b>Toolbar button action:</b>
-    <select id="toolbarAction">
-      <option value="reopen">Open current tab URL in a temp container</option>
-      <option value="newtab">Open a new tab in a temp container</option>
-    </select>
-  </fieldset>
-
-  <fieldset>
-    <h4>Addional Features</h4>
+    <h4>
+      Additional Features
+      <abbr title="Grant Permission, to enable feature">(?)</abbr>
+    </h4>
     <ul>
       <li>"Read and modify bookmarks", enables the bookmark context entry</li>
       <li>"Access browsing history", enables automatic history deletion</li>
     </ul>
+  </fieldset>
+
+  <fieldset>
+    <b>Toolbar button:</b>
+    <select id="toolbarAction">
+      <option value="reopen">Open current tab URL in a temp container</option>
+      <option value="newtab">Open a new tab in a temp container</option>
+    </select>
   </fieldset>
 
   <fieldset>
@@ -42,11 +45,20 @@
   </fieldset>
 
   <fieldset>
-    <b>Multi-Open shortcut argument:</b>
-    <input type="number" id="multiopen" value="3" min="0" max="10" />
+    <button
+      id="experimentalbtn"
+      style="float: right; text-align: center; font-size: 0.8em"
+      title="special options (experimental)"
+    >
+      ⚠️
+    </button>
   </fieldset>
 
-  <form id="mainForm" accept-charset="utf-8">
+  <form id="mainForm" accept-charset="utf-8" style="display: none">
+    <fieldset>
+      <b>Multi-Open shortcut argument:</b>
+      <input type="number" id="multiopen" value="3" min="0" max="10" />
+    </fieldset>
     <fieldset>
       <h4>Operation Mode</h4>
       <fieldset>

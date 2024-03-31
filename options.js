@@ -239,3 +239,12 @@ impbtn.addEventListener("input", function () {
   };
   reader.readAsText(file);
 });
+
+document.getElementById("experimentalbtn").addEventListener("click", () => {
+  const dp = document.getElementById("mainForm").style.display;
+  if (dp === "none") {
+    document.getElementById("mainForm").style.display = "block";
+  } else {
+    document.getElementById("mainForm").style.display = "none";
+  }
+});
