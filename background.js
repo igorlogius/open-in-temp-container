@@ -225,7 +225,7 @@ async function createContainer() {
 }
 
 async function onStorageChange() {
-  toolbarAction = await getFromStorage("boolean", "toolbarAction", "reopen");
+  toolbarAction = await getFromStorage("string", "toolbarAction", "reopen");
   usecolors = await getFromStorage("object", "usecolors", allcolors);
   if (!Array.isArray(usecolors)) {
     usecolors = allcolors;
