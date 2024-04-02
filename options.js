@@ -57,9 +57,11 @@ function onChange(evt) {
       let el = document.getElementById(id);
       let val = obj[id];
 
-      if (Array.isArray(val) && val.length > 0) {
-        for (var i = 0; i < el.options.length; i++) {
+      for (var i = 0; i < el.options.length; i++) {
+        if (Array.isArray(val)) {
           el.options[i].selected = val.includes(el.options[i].value);
+        } else {
+          el.options[i].selected = val == el.options[i].value;
         }
       }
     })

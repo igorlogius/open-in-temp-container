@@ -71,7 +71,11 @@ async function buildRegExList() {
 
 async function getFromStorage(type, id, fallback) {
   let tmp = await browser.storage.local.get(id);
-  return typeof tmp[id] === type ? tmp[id] : fallback;
+  if (typeof tmp[id] === type) {
+    return tmp[id];
+  }
+  await setToStorage(id, fallback);
+  return fallback;
 }
 
 async function setToStorage(id, value) {
