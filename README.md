@@ -3,6 +3,8 @@ Open a tab, page, link or bookmark in a new empty temporary container
 More Infos about containers:
 https://support.mozilla.org/en-US/kb/how-use-firefox-containers
 
+### [Click here to report a bug, make a suggestion or ask a question](https://github.com/igorlogius/igorlogius/issues/new/choose)
+
 <b>Short Demo Video:</b>
 
 https://github.com/igorlogius/open-in-temp-container/assets/67047467/996f18a0-f95f-40ca-9082-d690d4a95b35
