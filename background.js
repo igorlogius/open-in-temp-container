@@ -37,35 +37,20 @@ function isOnRegexList(url) {
 }
 
 async function buildRegExList() {
-  let selectors = await getFromStorage("object", "selectors", []);
-
   const out = [];
-
-  selectors.forEach((e) => {
-    // check activ
-    if (typeof e.activ !== "boolean") {
-      return;
-    }
-    if (e.activ !== true) {
-      return;
-    }
-
-    // check url regex
-    if (typeof e.url_regex !== "string") {
-      return;
-    }
-    e.url_regex = e.url_regex.trim();
-    if (e.url_regex === "") {
-      return;
-    }
-
-    try {
-      out.push(new RegExp(e.url_regex));
-    } catch (e) {
-      return;
-    }
-  });
-
+  (await getFromStorage("string", "textarea_regexstrs", ""))
+    .split("\n")
+    .forEach((line) => {
+      line = line.trim();
+      if (line !== "") {
+        try {
+          out.push(new RegExp(line));
+        } catch (e) {
+          // todo: show a notification that a regex failed to compile ...
+          console.warn(e);
+        }
+      }
+    });
   return out;
 }
 
@@ -251,9 +236,24 @@ async function onStorageChange() {
 }
 
 // show the user the options page on first installation
-function onInstall(details) {
+async function onInstall(details) {
   if (details.reason === "install") {
     browser.runtime.openOptionsPage();
+  }
+  // convert storage data
+  if (details.reason === "update") {
+    let selectors = await getFromStorage("object", "selectors", []);
+
+    out = "";
+    selectors.forEach((e) => {
+      if (typeof e.url_regex === "string") {
+        out = out + e.url_regex + "\n";
+      }
+    });
+
+    if (out !== "") {
+      setToStorage("textarea_regexstrs", out);
+    }
   }
 }
 
