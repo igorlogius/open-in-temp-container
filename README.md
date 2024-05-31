@@ -1,7 +1,5 @@
-Open a tab, page, link or bookmark in a temporary container
-<br />
-Not sure what containers are about? See 
-https://support.mozilla.org/kb/how-use-firefox-containers
+Open a tab, page, link or bookmark in a temporary container <br />
+Not sure what containers are about, then take at https://support.mozilla.org/kb/how-use-firefox-containers
 
 [![](https://raw.githubusercontent.com/igorlogius/igorlogius/main/geFxAddon.png)](https://addons.mozilla.org/firefox/addon/open-in-temp-container/)
 
