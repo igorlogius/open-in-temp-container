@@ -1,4 +1,4 @@
-Open a tab, page, link or bookmark in a new empty temporary container
+Open a tab, page, link or bookmark in a temporary container
 <br />
 More Infos about containers:
 https://support.mozilla.org/en-US/kb/how-use-firefox-containers
