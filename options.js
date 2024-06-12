@@ -102,7 +102,7 @@ browser.storage.local
   let el = document.getElementById(id);
   el.addEventListener("input", () => {
     const selectedItems = Array.from(el.selectedOptions).map(
-      (option) => option.value
+      (option) => option.value,
     );
     let obj = {};
     if (el.hasAttribute("multiple")) {

@@ -106,7 +106,7 @@ browser.menus.create({
           createTempContainerTab(bm.url);
         } else {
           for (const c of await browser.bookmarks.getChildren(
-            clickdata.bookmarkId
+            clickdata.bookmarkId,
           )) {
             if (c.url) {
               createTempContainerTab(c.url, openAsActive);
@@ -149,7 +149,7 @@ async function onTabRemoved() {
 
   containerCleanupTimer = setTimeout(async () => {
     const containerWithTabs = new Set(
-      (await browser.tabs.query({})).map((t) => t.cookieStoreId)
+      (await browser.tabs.query({})).map((t) => t.cookieStoreId),
     );
 
     containers = await browser.contextualIdentities.query({});
@@ -231,7 +231,7 @@ async function onStorageChange() {
   historyCleanUpQueue = await getFromStorage(
     "object",
     "historyCleanUpQueue",
-    []
+    [],
   );
 }
 
@@ -293,7 +293,7 @@ async function onBeforeNavigate(details) {
   try {
     const tabInfo = await browser.tabs.get(details.tabId);
     const container = await browser.contextualIdentities.get(
-      tabInfo.cookieStoreId
+      tabInfo.cookieStoreId,
     );
     // in a container
     if (container.name.startsWith("Temp")) {
@@ -338,9 +338,8 @@ function cleanupHistory() {
 }
 
 async function handlePermissionChange() {
-  historyPermissionEnabled = await browser.permissions.contains(
-    historyPermission
-  );
+  historyPermissionEnabled =
+    await browser.permissions.contains(historyPermission);
   clearInterval(intId);
   if (historyPermissionEnabled) {
     intId = setInterval(cleanupHistory, deldelay);
@@ -367,7 +366,7 @@ async function handlePermissionChange() {
   browser.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
   browser.webNavigation.onHistoryStateUpdated.addListener(onBeforeNavigate);
   browser.webNavigation.onReferenceFragmentUpdated.addListener(
-    onBeforeNavigate
+    onBeforeNavigate,
   );
   browser.webNavigation.onErrorOccurred.addListener(onBeforeNavigate);
   browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
