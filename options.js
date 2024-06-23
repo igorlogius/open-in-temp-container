@@ -41,15 +41,40 @@ function onChange(evt) {
 }
 
 document.getElementById("regexstrs_save_btn").addEventListener("click", () => {
-  const val = document.getElementById("textarea_regexstrs").value.trim();
+  let val = document.getElementById("textarea_regexstrs").value.trim();
   setToStorage("textarea_regexstrs", val);
 });
+
+document
+  .getElementById("neveropenintcregexstrs_save_btn")
+  .addEventListener("click", () => {
+    val = document
+      .getElementById("textarea_neveropenintcregexstrs")
+      .value.trim();
+    setToStorage("textarea_neveropenintcregexstrs", val);
+  });
 
 browser.storage.local
   .get("textarea_regexstrs")
   .then((obj) => {
     let el = document.getElementById("textarea_regexstrs");
     let val = obj["textarea_regexstrs"];
+
+    if (typeof val !== "undefined") {
+      if (el.type === "checkbox") {
+        el.checked = val;
+      } else {
+        el.value = val;
+      }
+    }
+  })
+  .catch(console.error);
+
+browser.storage.local
+  .get("textarea_neveropenintcregexstrs")
+  .then((obj) => {
+    let el = document.getElementById("textarea_neveropenintcregexstrs");
+    let val = obj["textarea_neveropenintcregexstrs"];
 
     if (typeof val !== "undefined") {
       if (el.type === "checkbox") {

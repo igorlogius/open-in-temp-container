@@ -1,7 +1,6 @@
 /* global browser */
 
 // cookieStoreIds of all managed containers
-let list = null;
 let historyPermissionEnabled = false;
 let intId = null;
 let historyCleanUpQueue = [];
@@ -10,6 +9,7 @@ let toolbarAction = "";
 let deldelay = 30000; // delay until Tmp Containers and History Entries are removed
 let multiopen = 3;
 let regexList = null;
+let neverOpenInTempContainerRegexList = null;
 
 // array of all allowed container colors
 const allcolors = [
@@ -34,6 +34,33 @@ function isOnRegexList(url) {
     }
   }
   return false;
+}
+
+function isOnNeverOpenInTempContainerRegexList(url) {
+  for (let i = 0; i < neverOpenInTempContainerRegexList.length; i++) {
+    if (neverOpenInTempContainerRegexList[i].test(url)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function buildNeverOpenInTempContainerRegExList() {
+  const out = [];
+  (await getFromStorage("string", "textarea_neveropenintcregexstrs", ""))
+    .split("\n")
+    .forEach((line) => {
+      line = line.trim();
+      if (line !== "") {
+        try {
+          out.push(new RegExp(line));
+        } catch (e) {
+          // todo: show a notification that a regex failed to compile ...
+          console.warn(e);
+        }
+      }
+    });
+  return out;
 }
 
 async function buildRegExList() {
@@ -228,6 +255,11 @@ async function onStorageChange() {
 
   regexList = await buildRegExList();
 
+  neverOpenInTempContainerRegexList =
+    await buildNeverOpenInTempContainerRegExList();
+
+  console.debug(neverOpenInTempContainerRegexList);
+
   historyCleanUpQueue = await getFromStorage(
     "object",
     "historyCleanUpQueue",
@@ -290,6 +322,9 @@ async function onBeforeNavigate(details) {
   if (!details.url.startsWith("http")) {
     return;
   }
+  const _isOnNeverInTempContainerRegexList =
+    isOnNeverOpenInTempContainerRegexList(details.url);
+
   try {
     const tabInfo = await browser.tabs.get(details.tabId);
     const container = await browser.contextualIdentities.get(
@@ -297,6 +332,15 @@ async function onBeforeNavigate(details) {
     );
     // in a container
     if (container.name.startsWith("Temp")) {
+      if (_isOnNeverInTempContainerRegexList) {
+        const obj = {
+          active: tabInfo.active || false,
+          url: details.url,
+        };
+        browser.tabs.create(obj);
+        browser.tabs.remove(details.tabId);
+        return;
+      }
       if (!historyPermissionEnabled) {
         return;
       }
@@ -307,14 +351,16 @@ async function onBeforeNavigate(details) {
       setToStorage("historyCleanUpQueue", historyCleanUpQueue);
     }
   } catch (e) {
-    // not in a container
-    const _isOnList = isOnRegexList(details.url);
-    if (
-      (listmode === "exclude" && !_isOnList) ||
-      (listmode === "include" && _isOnList)
-    ) {
-      await createTempContainerTab(details.url, true);
-      browser.tabs.remove(details.tabId);
+    if (!_isOnNeverInTempContainerRegexList) {
+      // not in a container
+      const _isOnList = isOnRegexList(details.url);
+      if (
+        (listmode === "exclude" && !_isOnList) ||
+        (listmode === "include" && _isOnList)
+      ) {
+        await createTempContainerTab(details.url, true);
+        browser.tabs.remove(details.tabId);
+      }
     }
   }
 }
