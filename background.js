@@ -316,6 +316,9 @@ async function onCommand(command) {
 }
 
 async function onBeforeNavigate(details) {
+  if (details.frameId > 0) {
+    return;
+  }
   if (typeof details.url !== "string") {
     return;
   }
@@ -418,6 +421,7 @@ async function handlePermissionChange() {
   browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
     if (changeInfo.url) {
       onBeforeNavigate({
+        frameId: 0,
         tabId,
         url: changeInfo.url,
       });
