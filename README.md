@@ -18,3 +18,9 @@ https://github.com/igorlogius/open-in-temp-container/assets/67047467/996f18a0-f9
   <li>bookmark context entry</li>
   <li>delete history</li>
 </ul>
+
+### Why is the context menu visible when no link has been selected? 
+
+This is a sideeffect from adding the feature to open multilple links in selections.
+Fixing this would currently require to always analyse the selection and update the context menu when there are no links found in the selections, but
+since this would require the very "frightening" `<all_urls>` permission i opted to just always displayed the context menu, instead as the better way to go about this.
