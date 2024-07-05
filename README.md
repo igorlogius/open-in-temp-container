@@ -24,3 +24,7 @@ https://github.com/igorlogius/open-in-temp-container/assets/67047467/996f18a0-f9
 This is a sideeffect from adding the feature to open multilple links in selections.
 Fixing this would currently require to always analyse the selection and update the context menu when there are no links found in the selections, but
 since this would require the very "frightening" `<all_urls>` permission i opted to just always displayed the context menu, instead as the better way to go about this.
+
+### Glitchy text selection in textareas in "Options" tabs?
+
+Seems to be a firefox issue. See https://bugzilla.mozilla.org/show_bug.cgi?id=1904286
