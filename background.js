@@ -258,8 +258,6 @@ async function onStorageChange() {
   neverOpenInTempContainerRegexList =
     await buildNeverOpenInTempContainerRegExList();
 
-  console.debug(neverOpenInTempContainerRegexList);
-
   historyCleanUpQueue = await getFromStorage(
     "object",
     "historyCleanUpQueue",
@@ -315,6 +313,12 @@ async function onCommand(command) {
   }
 }
 
+function sameOrigin(urlA, urlB) {
+  const a = new URL(urlA);
+  const b = new URL(urlB);
+  return a.origin === b.origin;
+}
+
 async function onBeforeNavigate(details) {
   if (details.frameId > 0) {
     return;
@@ -328,8 +332,8 @@ async function onBeforeNavigate(details) {
   const _isOnNeverInTempContainerRegexList =
     isOnNeverOpenInTempContainerRegexList(details.url);
 
+  const tabInfo = await browser.tabs.get(details.tabId);
   try {
-    const tabInfo = await browser.tabs.get(details.tabId);
     const container = await browser.contextualIdentities.get(
       tabInfo.cookieStoreId,
     );
@@ -344,6 +348,19 @@ async function onBeforeNavigate(details) {
         browser.tabs.remove(details.tabId);
         return;
       }
+
+      // make links open from containered tabs not open in the same container
+      // !experimental
+      if (tabInfo.openerTabId) {
+        const openertabInfo = await browser.tabs.get(tabInfo.openerTabId);
+        if (openertabInfo.cookieStoreId === tabInfo.cookieStoreId) {
+          if (!sameOrigin(details.url, openertabInfo.url)) {
+            await createTempContainerTab(details.url, tabInfo.active);
+            browser.tabs.remove(details.tabId);
+          }
+        }
+      }
+
       if (!historyPermissionEnabled) {
         return;
       }
@@ -361,7 +378,7 @@ async function onBeforeNavigate(details) {
         (listmode === "exclude" && !_isOnList) ||
         (listmode === "include" && _isOnList)
       ) {
-        await createTempContainerTab(details.url, true);
+        await createTempContainerTab(details.url, tabInfo.active);
         browser.tabs.remove(details.tabId);
       }
     }
