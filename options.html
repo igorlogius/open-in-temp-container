@@ -5,6 +5,7 @@
     body {
       background-color: lightgrey;
       padding: 5px;
+      min-height: 640px;
     }
     textarea {
       width: 100%;
@@ -12,140 +13,163 @@
     }
     fieldset {
       padding: 10px;
-    }
-    #permissions {
-      width: 100%;
-    }
-
-    #permissions td {
-      border-bottom: 1px solid gray;
+      margin: 5px;
+      border: 1px groove black;
     }
   </style>
 </head>
 <body>
   <fieldset>
-    <h4>
-      <abbr title="see Permissions tab to enable">
-        Optional permissions for added functionality (?):
+    <legend>
+      <abbr title="">
+        <b>Additional Functionality</b>
       </abbr>
-    </h4>
-    <table id="permissions">
-      <tr>
-        <!--td>
-          <b>Optional Permission</b>
-        </td>
-        <td>
-          <b> Functionality </b>
-        </td-->
-      </tr>
-      <tr>
-        <td>
-          <i>1. "Read and modify bookmarks"</i>
-        </td>
-        <td>Adds the bookmark context entry</td>
-      </tr>
-      <tr>
-        <td>
-          <i>2. "Access browsing history" </i>
-        </td>
-        <td>Enables automatic history deletion</td>
-      </tr>
-    </table>
-  </fieldset>
+    </legend>
 
-  <fieldset>
-    <abbr title="Choose what clicking the toolbar button does">
-      <b>Toolbar button action (?):</b>
-    </abbr>
-    <select id="toolbarAction">
-      <option value="reopen">Open current tab URL in a temp container</option>
-      <option value="newtab">Open a new tab in a temp container</option>
-    </select>
-  </fieldset>
-
-  <fieldset>
-    <h4>
-      <abbr title="Hold CTRL to select or deselect multiple colors">
-        Container colors (?):</abbr
-      >
-    </h4>
-    <select id="usecolors" multiple style="min-height: 13em; width: 100%">
-      <option value="blue">blue</option>
-      <option value="turquoise">turquoise</option>
-      <option value="green">green</option>
-      <option value="yellow">yellow</option>
-      <option value="orange">orange</option>
-      <option value="red">red</option>
-      <option value="pink">pink</option>
-      <option value="purple">purple</option>
-    </select>
-  </fieldset>
-
-  <fieldset>
-    <button
-      id="experimentalbtn"
-      style="float: right; text-align: center; font-size: 0.8em"
-      title="special options (experimental)"
+    1.
+    <abbr
+      title="Grant the 'Read and modify bookmarks' permission in the Permissions tab"
     >
-      ⚠️
-    </button>
+      Context menu on Bookmarks (?)
+    </abbr>
+
+    <br />
+    2.
+    <abbr
+      title="Grant the 'Access browsing history' permission in the Permissions tab"
+    >
+      Automatic history deletion (?)
+    </abbr>
   </fieldset>
-  <div id="mainForm" accept-charset="utf-8" style="display: none">
-    <fieldset>
-      <abbr title="Specify the amounts of tabs that will be opened">
-        <b>Multi-Open shortcut parameter (?):</b>
+
+  <fieldset>
+    <legend>
+      <b>Toolbar Action</b>
+    </legend>
+
+    <input type="radio" value="reopen" name="toolbarAction" checked /> Open TC
+    with current URL
+    <input type="radio" value="newtab" name="toolbarAction" /> Open TC with
+    'about:newtab'
+  </fieldset>
+
+  <fieldset>
+    <legend>
+      <b>Colors</b>
+    </legend>
+    <span style="background-color: blue; color: white"
+      ><input type="checkbox" name="usecolors" value="blue" checked />blue
+    </span>
+
+    <span style="background-color: turquoise"
+      ><input
+        type="checkbox"
+        name="usecolors"
+        value="turquoise"
+        checked
+      />turquoise</span
+    >
+
+    <span style="background-color: green; color: white"
+      ><input type="checkbox" name="usecolors" value="green" checked />green
+    </span>
+
+    <span style="background-color: yellow"
+      ><input type="checkbox" name="usecolors" value="yellow" checked />yellow
+    </span>
+
+    <span style="background-color: orange">
+      <input type="checkbox" name="usecolors" value="orange" checked />orange
+    </span>
+
+    <span style="background-color: red; color: white">
+      <input type="checkbox" name="usecolors" value="red" checked />red
+    </span>
+
+    <span style="background-color: pink">
+      <input type="checkbox" name="usecolors" value="pink" checked />pink
+    </span>
+
+    <span style="background-color: purple; color: white">
+      <input type="checkbox" name="usecolors" value="purple" checked />
+      purple</span
+    >
+  </fieldset>
+
+  <fieldset>
+    <legend>
+      <abbr
+        title="Configure when temp containers should be automatically created/used"
+      >
+        <b>Automation Mode (?):</b>
       </abbr>
-      <input type="number" id="multiopen" value="3" min="0" max="10" />
-    </fieldset>
-    <fieldset>
-      <fieldset>
-        <abbr title="Choose between blacklist or whitelist mode">
-          <h4>Operation Mode (?):</h4>
-        </abbr>
-        <select id="listmode" style="width: 100%; text-align: center">
-          <option value="include">
-            Open only URLs matching in temp container
-          </option>
-          <option value="exclude">
-            Open everything not matching in a temp container
-          </option>
-        </select>
-        <br />
-        <textarea
-          id="textarea_regexstrs"
-          placeholder="Enter regular expressions line by line here
+    </legend>
+
+    <div style="padding-left: 25%; border: 1px solid gray">
+      <input type="radio" value="include" name="listmode" />
+      <abbr
+        title="Only tabs matching any followup expression, will be automatically opened in a temporary container"
+      >
+        Explicit (?)
+      </abbr>
+      <input type="radio" value="exclude" name="listmode" />
+      <abbr
+        title="All tabs will be opened in a temp container, execpt those matching any followup expressions"
+      >
+        Implicit (?)
+      </abbr>
+    </div>
+
+    <textarea
+      id="textarea_regexstrs"
+      placeholder="Enter exclusions for the selected mode here.
+Enter regular expressions line by line
 Examples:
     ^https:\/\/www\.facebook\.com.*
     ^https:\/\/example\.net.*
     ^https:\/\/.*\.wikipedia\.org.*
 "
-        ></textarea>
+    ></textarea>
 
-        <button id="regexstrs_save_btn" style="float: right">Save</button>
+    <!-- button id="regexstrs_save_btn" style="float: right">Save</button-->
+  </fieldset>
 
-        <h4>
-          <abbr
-            title="Tabs with matching  urls will automatically be re-opened outside the temp container isolation"
-          >
-            Exclusion Matches (?):</abbr
-          >
-        </h4>
-        <textarea
-          id="textarea_neveropenintcregexstrs"
-          placeholder="Enter regular expressions line by line here
+  <fieldset>
+    <legend>
+      <abbr
+        title="Tabs with matching URLs will automatically be re-opened outside the temp container isolation"
+      >
+        <b>Exclude from TC (?)</b></abbr
+      >
+    </legend>
+    <textarea
+      id="textarea_neveropenintcregexstrs"
+      placeholder="Enter regular expressions line by line here
 Examples:
     ^https:\/\/www\.facebook\.com.*
     ^https:\/\/example\.net.*
     ^https:\/\/.*\.wikipedia\.org.*
 "
-        ></textarea>
+    ></textarea>
 
-        <button id="neveropenintcregexstrs_save_btn" style="float: right">
-          Save
-        </button>
-      </fieldset>
-    </fieldset>
-  </div>
+    <!--button id="neveropenintcregexstrs_save_btn" style="float: right">
+        Save
+      </button-->
+  </fieldset>
+
+  <fieldset>
+    <legend>
+      <abbr
+        title="Specify the amounts of tabs that should be opened for each shortcut"
+      >
+        <b>Multi-Open Shortcut Parameters (?):</b>
+      </abbr>
+    </legend>
+
+    X <input type="number" id="multiopen" value="2" min="0" max="99" /> Y
+    <input type="number" id="multiopen2" value="3" min="0" max="99" /> Z
+    <input type="number" id="multiopen3" value="4" min="0" max="99" />
+  </fieldset>
 
   <script src="options.js"></script>
 </body>

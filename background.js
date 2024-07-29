@@ -7,7 +7,9 @@ let historyCleanUpQueue = [];
 let containerCleanupTimer = null;
 let toolbarAction = "";
 let deldelay = 30000; // delay until Tmp Containers and History Entries are removed
-let multiopen = 3;
+let multiopen = 2;
+let multiopen2 = 3;
+let multiopen3 = 4;
 let regexList = null;
 let neverOpenInTempContainerRegexList = null;
 
@@ -249,7 +251,9 @@ async function onStorageChange() {
   if (usecolors.length < 1) {
     usecolors = allcolors;
   }
-  multiopen = await getFromStorage("number", "multiopen", 3);
+  multiopen = await getFromStorage("number", "multiopen", 2);
+  multiopen2 = await getFromStorage("number", "multiopen2", 3);
+  multiopen3 = await getFromStorage("number", "multiopen3", 4);
 
   listmode = await getFromStorage("string", "listmode", "include");
 
@@ -302,11 +306,26 @@ async function onCommand(command) {
     }
   }
 
-  if (command === "multiopen") {
+  if (command.startsWith("multiopen")) {
+    let repeat = 0;
+
+    switch (command) {
+      case "multiopen":
+        repeat = multiopen;
+        break;
+      case "multiopen2":
+        repeat = multiopen2;
+        break;
+      case "multiopen3":
+        repeat = multiopen3;
+        break;
+      default:
+        return;
+    }
     let tabs = await browser.tabs.query({ currentWindow: true, active: true });
     if (tabs.length > 0) {
       const atab = tabs[0];
-      for (let i = 0; i < multiopen; i++) {
+      for (let i = 0; i < repeat; i++) {
         createTempContainerTab(atab.url);
       }
     }

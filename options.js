@@ -40,14 +40,14 @@ function onChange(evt) {
   browser.storage.local.set(obj).catch(console.error);
 }
 
-document.getElementById("regexstrs_save_btn").addEventListener("click", () => {
+document.getElementById("textarea_regexstrs").addEventListener("input", () => {
   let val = document.getElementById("textarea_regexstrs").value.trim();
   setToStorage("textarea_regexstrs", val);
 });
 
 document
-  .getElementById("neveropenintcregexstrs_save_btn")
-  .addEventListener("click", () => {
+  .getElementById("textarea_neveropenintcregexstrs")
+  .addEventListener("input", () => {
     val = document
       .getElementById("textarea_neveropenintcregexstrs")
       .value.trim();
@@ -86,7 +86,7 @@ browser.storage.local
   })
   .catch(console.error);
 
-["multiopen"].map((id) => {
+["multiopen", "multiopen2", "multiopen3"].map((id) => {
   browser.storage.local
     .get(id)
     .then((obj) => {
@@ -107,43 +107,51 @@ browser.storage.local
   el.addEventListener("input", onChange);
 });
 
-["usecolors", "toolbarAction", "listmode"].map((id) => {
+/* input[ radio || checkbox ] */
+["toolbarAction", "usecolors", "listmode"].map((id) => {
   browser.storage.local
     .get(id)
     .then((obj) => {
-      let el = document.getElementById(id);
       let val = obj[id];
+      console.debug(id, val);
 
-      for (var i = 0; i < el.options.length; i++) {
-        if (Array.isArray(val)) {
-          el.options[i].selected = val.includes(el.options[i].value);
-        } else {
-          el.options[i].selected = val == el.options[i].value;
+      /* checkbox */
+      if (Array.isArray(val)) {
+        let els = document.getElementsByName(id);
+
+        for (let el of els) {
+          if (val.includes(el.value)) {
+            el.checked = true;
+          } else {
+            el.checked = false;
+          }
+
+          el.addEventListener("click", (evt) => {
+            const vals = Array.from(document.getElementsByName(evt.target.name))
+              .filter((el) => el.checked)
+              .map((el) => el.value);
+
+            console.debug(evt.target.name, vals);
+            setToStorage(evt.target.name, vals);
+          });
+        }
+      } else {
+        /* radio group, only one active */
+        let els = document.getElementsByName(id);
+
+        for (let el of els) {
+          if (el.value === val) {
+            el.checked = true;
+          } else {
+            el.checked = false;
+          }
+
+          el.addEventListener("click", (evt) => {
+            console.debug(evt.target.name, evt.target.value);
+            setToStorage(evt.target.name, evt.target.value);
+          });
         }
       }
     })
     .catch(console.error);
-
-  let el = document.getElementById(id);
-  el.addEventListener("input", () => {
-    const selectedItems = Array.from(el.selectedOptions).map(
-      (option) => option.value,
-    );
-    let obj = {};
-    if (el.hasAttribute("multiple")) {
-      obj[id] = selectedItems;
-    } else {
-      obj[id] = selectedItems[0];
-    }
-    browser.storage.local.set(obj).catch(console.error);
-  });
-});
-
-document.getElementById("experimentalbtn").addEventListener("click", (el) => {
-  const dp = document.getElementById("mainForm").style.display;
-  if (dp === "none") {
-    document.getElementById("mainForm").style.display = "block";
-  } else {
-    document.getElementById("mainForm").style.display = "none";
-  }
 });

@@ -15,7 +15,7 @@
   },
   "commands": {
     "_execute_browser_action": {
-      "description": "Toolbar button action"
+      "description": "Toolbar Action"
     },
     "opennewtab": {
       "description": "Open newtab in temp container"
@@ -24,7 +24,13 @@
       "description": "Open newtab in same container as current tab"
     },
     "multiopen": {
-      "description": "Multi-Open current tab url in N temp container tabs"
+      "description": "Open current tab URL in X TC tabs"
+    },
+    "multiopen2": {
+      "description": "Open current tab URL in Y TC tabs"
+    },
+    "multiopen3": {
+      "description": "Open current tab URL in Z TC tabs"
     }
   },
   "description": "Open the page,tab,link or bookmark in a new temporary container tab",
@@ -46,5 +52,5 @@
     "tabs"
   ],
   "optional_permissions": ["bookmarks", "history"],
-  "version": "1.1.38"
+  "version": "1.1.39"
 }
