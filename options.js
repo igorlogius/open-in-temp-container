@@ -113,7 +113,6 @@ browser.storage.local
     .get(id)
     .then((obj) => {
       let val = obj[id];
-      console.debug(id, val);
 
       /* checkbox */
       if (Array.isArray(val)) {
@@ -131,7 +130,6 @@ browser.storage.local
               .filter((el) => el.checked)
               .map((el) => el.value);
 
-            console.debug(evt.target.name, vals);
             setToStorage(evt.target.name, vals);
           });
         }
@@ -147,11 +145,48 @@ browser.storage.local
           }
 
           el.addEventListener("click", (evt) => {
-            console.debug(evt.target.name, evt.target.value);
             setToStorage(evt.target.name, evt.target.value);
           });
         }
       }
     })
     .catch(console.error);
+});
+
+// Permission checkboxes
+
+function handlePermissionChange() {
+  Array.from(
+    document.querySelectorAll('input[name="permission"][type="checkbox"]'),
+  ).forEach(async (el) => {
+    if (await browser.permissions.contains({ permissions: [el.value] })) {
+      el.checked = true;
+    } else {
+      el.checked = false;
+    }
+  });
+}
+
+browser.permissions.onRemoved.addListener(handlePermissionChange);
+
+browser.permissions.onAdded.addListener(handlePermissionChange);
+
+Array.from(
+  document.querySelectorAll('input[name="permission"][type="checkbox"]'),
+).forEach(async (el) => {
+  if (await browser.permissions.contains({ permissions: [el.value] })) {
+    el.checked = true;
+  } else {
+    el.checked = false;
+  }
+
+  el.addEventListener("click", async (evt) => {
+    if (evt.target.checked) {
+      await browser.permissions.request({ permissions: [evt.target.value] });
+    } else {
+      await browser.permissions.remove({ permissions: [evt.target.value] });
+    }
+
+    handlePermissionChange();
+  });
 });
