@@ -86,7 +86,7 @@ browser.storage.local
   })
   .catch(console.error);
 
-["multiopen", "multiopen2", "multiopen3"].map((id) => {
+["multiopen", "multiopen2", "multiopen3", "sameorigin"].map((id) => {
   browser.storage.local
     .get(id)
     .then((obj) => {

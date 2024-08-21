@@ -12,6 +12,7 @@ let multiopen2 = 3;
 let multiopen3 = 4;
 let regexList = null;
 let neverOpenInTempContainerRegexList = null;
+let containerForSameOrigin = true;
 
 // array of all allowed container colors
 const allcolors = [
@@ -267,6 +268,8 @@ async function onStorageChange() {
     "historyCleanUpQueue",
     [],
   );
+
+  containerForSameOrigin = await getFromStorage("boolean", "sameorigin", true);
 }
 
 // show the user the options page on first installation
@@ -370,7 +373,7 @@ async function onBeforeNavigate(details) {
 
       // make links open from containered tabs not open in the same container
       // !experimental
-      if (tabInfo.openerTabId) {
+      if (tabInfo.openerTabId && containerForSameOrigin) {
         const openertabInfo = await browser.tabs.get(tabInfo.openerTabId);
         if (openertabInfo.cookieStoreId === tabInfo.cookieStoreId) {
           if (!sameOrigin(details.url, openertabInfo.url)) {
