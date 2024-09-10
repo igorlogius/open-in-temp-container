@@ -222,11 +222,23 @@ async function openNewTabInExistingContainer(cookieStoreId) {
   });
 }
 
-function onBAClicked(tab) {
+async function onBAClicked(tab) {
   if (toolbarAction === "newtab") {
     createTempContainerTab();
   } else {
-    createTempContainerTab(tab.url);
+    if (tab.url.startsWith("http")) {
+      await createTempContainerTab(tab.url, true);
+
+      /*  closing the existing tab ... might be desirable but ... also not ... lets leave it as is
+      try {
+        await browser.contextualIdentities.get(tab.cookieStoreId);
+      } catch (e) {
+        // not in a container, lets close the tab
+        // noop ,
+        browser.tabs.remove(tab.id); //
+      }
+        */
+    }
   }
 }
 
@@ -342,57 +354,76 @@ function sameOrigin(urlA, urlB) {
 }
 
 async function onBeforeNavigate(details) {
-  if (details.frameId > 0) {
-    return;
-  }
+  /*
+  if(details.originUrl.startsWith('moz-extension')){
+        return;
+    }
+    */
+
   if (typeof details.url !== "string") {
     return;
   }
   if (!details.url.startsWith("http")) {
     return;
   }
+
   const _isOnNeverInTempContainerRegexList =
     isOnNeverOpenInTempContainerRegexList(details.url);
 
-  const tabInfo = await browser.tabs.get(details.tabId);
-  try {
-    const container = await browser.contextualIdentities.get(
-      tabInfo.cookieStoreId,
-    );
-    // in a container
-    if (container.name.startsWith("Temp")) {
-      if (_isOnNeverInTempContainerRegexList) {
-        const obj = {
-          active: tabInfo.active || false,
-          url: details.url,
-        };
-        browser.tabs.create(obj);
-        browser.tabs.remove(details.tabId);
-        return;
-      }
+  //console.debug(details, _isOnNeverInTempContainerRegexList);
 
-      // make links open from containered tabs not open in the same container
-      // !experimental
-      if (tabInfo.openerTabId && containerForSameOrigin) {
-        const openertabInfo = await browser.tabs.get(tabInfo.openerTabId);
-        if (openertabInfo.cookieStoreId === tabInfo.cookieStoreId) {
-          if (!sameOrigin(details.url, openertabInfo.url)) {
-            await createTempContainerTab(details.url, tabInfo.active);
-            browser.tabs.remove(details.tabId);
-          }
+  let tabInfo;
+  try {
+    tabInfo = await browser.tabs.get(details.tabId);
+  } catch (e) {
+    console.error(e);
+    return;
+  }
+
+  let inTempContainer = await (async (cs) => {
+    try {
+      const container = await browser.contextualIdentities.get(cs);
+      return container.name.startsWith("Temp");
+    } catch (e) {
+      return false;
+    }
+
+    // in a container
+  })(tabInfo.cookieStoreId);
+
+  if (inTempContainer) {
+    if (_isOnNeverInTempContainerRegexList) {
+      const obj = {
+        active: tabInfo.active || false,
+        url: details.url,
+      };
+      browser.tabs.create(obj);
+      browser.tabs.remove(tabInfo.tabId);
+      return { cancel: true };
+    }
+
+    // make links open from containered tabs not open in the same container
+    // !experimental
+    if (tabInfo.openerTabId && containerForSameOrigin) {
+      const openertabInfo = await browser.tabs.get(tabInfo.openerTabId);
+      if (openertabInfo.cookieStoreId === tabInfo.cookieStoreId) {
+        if (!sameOrigin(details.url, openertabInfo.url)) {
+          await createTempContainerTab(details.url, tabInfo.active);
+          browser.tabs.remove(tabInfo.id);
+          return { cancel: true };
         }
       }
-
-      if (!historyPermissionEnabled) {
-        return;
-      }
-      if (historyCleanUpQueue.includes(details.url)) {
-        return;
-      }
-      historyCleanUpQueue.push(details.url);
-      setToStorage("historyCleanUpQueue", historyCleanUpQueue);
     }
-  } catch (e) {
+
+    if (!historyPermissionEnabled) {
+      return;
+    }
+    if (historyCleanUpQueue.includes(details.url)) {
+      return;
+    }
+    historyCleanUpQueue.push(details.url);
+    setToStorage("historyCleanUpQueue", historyCleanUpQueue);
+  } else {
     if (!_isOnNeverInTempContainerRegexList) {
       // not in a container
       const _isOnList = isOnRegexList(details.url);
@@ -401,7 +432,8 @@ async function onBeforeNavigate(details) {
         (listmode === "include" && _isOnList)
       ) {
         await createTempContainerTab(details.url, tabInfo.active);
-        browser.tabs.remove(details.tabId);
+        browser.tabs.remove(tabInfo.id);
+        return { cancel: true };
       }
     }
   }
@@ -451,21 +483,61 @@ async function handlePermissionChange() {
   browser.storage.onChanged.addListener(onStorageChange);
   browser.tabs.onRemoved.addListener(onTabRemoved);
 
+  /*
   browser.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
   browser.webNavigation.onHistoryStateUpdated.addListener(onBeforeNavigate);
   browser.webNavigation.onReferenceFragmentUpdated.addListener(
     onBeforeNavigate,
   );
   browser.webNavigation.onErrorOccurred.addListener(onBeforeNavigate);
+ */
+
+  /*
   browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
-    if (changeInfo.url) {
-      onBeforeNavigate({
-        frameId: 0,
-        tabId,
-        url: changeInfo.url,
-      });
+    if (
+      typeof changeInfo.url === "string" &&
+      changeInfo.url.startsWith("https")
+    ) {
+      newtabInfo = tabInfo;
+      newtabInfo.url = changeInfo.url;
+      onBeforeNavigate(newtabInfo);
     }
   });
+*/
+
+  /*
+ *  unused Force different origins into new tabs
+ *  not sure if thats a good idea or bad yet
+ *  since it requires the webRequest + webRequestBlocking + <all_urls> permission
+ *  i'll leave it out for now
+
+  async function onBeforeRequest(details) {
+    const tab = await browser.tabs.get(details.tabId);
+    const tab_url = new URL(tab.url);
+    const req_url = new URL(details.url);
+    //console.debug(tab.url, details.url);
+
+    if (!tab.url.startsWith("about:") && tab_url.origin !== req_url.origin) {
+      browser.tabs.create({
+        active: true,
+        url: details.url,
+      });
+      return { cancel: true };
+    }
+  }
+
+  browser.webRequest.onBeforeRequest.addListener(
+    onBeforeRequest,
+    { urls: ["<all_urls>"], types: ["main_frame"] },
+    ["blocking"],
+  );
+*/
+
+  browser.webRequest.onBeforeRequest.addListener(
+    onBeforeNavigate,
+    { urls: ["<all_urls>"], types: ["main_frame"] },
+    ["blocking"],
+  );
 
   browser.permissions.onAdded.addListener(handlePermissionChange);
   browser.permissions.onRemoved.addListener(handlePermissionChange);

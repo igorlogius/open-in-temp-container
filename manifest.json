@@ -1,6 +1,6 @@
 {
   "author": "igorlogius",
-  "homepage_url": "https://github.com/igorlogius",
+  "homepage_url": "https://github.com/igorlogius/open-in-temp-container",
   "background": { "scripts": ["background.js"] },
   "browser_action": {
     "default_area": "navbar",
@@ -43,14 +43,15 @@
     "page": "options.html"
   },
   "permissions": [
-    "activeTab",
-    "webNavigation",
-    "storage",
+    "<all_urls>",
     "contextualIdentities",
     "cookies",
     "menus",
-    "tabs"
+    "storage",
+    "tabs",
+    "webRequest",
+    "webRequestBlocking"
   ],
   "optional_permissions": ["bookmarks", "history"],
-  "version": "1.1.41"
+  "version": "1.1.42"
 }
