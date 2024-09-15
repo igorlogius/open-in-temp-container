@@ -7,12 +7,9 @@ let historyCleanUpQueue = [];
 let containerCleanupTimer = null;
 let toolbarAction = "";
 let deldelay = 30000; // delay until Tmp Containers and History Entries are removed
-let multiopen = 2;
-let multiopen2 = 3;
-let multiopen3 = 4;
 let regexList = null;
-let neverOpenInTempContainerRegexList = null;
-let containerForSameOrigin = true;
+let ignoredRegexList = null;
+let splitorigins = false;
 
 // array of all allowed container colors
 const allcolors = [
@@ -39,18 +36,18 @@ function isOnRegexList(url) {
   return false;
 }
 
-function isOnNeverOpenInTempContainerRegexList(url) {
-  for (let i = 0; i < neverOpenInTempContainerRegexList.length; i++) {
-    if (neverOpenInTempContainerRegexList[i].test(url)) {
+function isOnIngoreList(url) {
+  for (let i = 0; i < ignoredRegexList.length; i++) {
+    if (ignoredRegexList[i].test(url)) {
       return true;
     }
   }
   return false;
 }
 
-async function buildNeverOpenInTempContainerRegExList() {
+async function buildIgnoreRegexList() {
   const out = [];
-  (await getFromStorage("string", "textarea_neveropenintcregexstrs", ""))
+  (await getFromStorage("string", "textarea_ignoreregexstrs", ""))
     .split("\n")
     .forEach((line) => {
       line = line.trim();
@@ -228,30 +225,20 @@ async function onBAClicked(tab) {
   } else {
     if (tab.url.startsWith("http")) {
       await createTempContainerTab(tab.url, true);
-
-      /*  closing the existing tab ... might be desirable but ... also not ... lets leave it as is
-      try {
-        await browser.contextualIdentities.get(tab.cookieStoreId);
-      } catch (e) {
-        // not in a container, lets close the tab
-        // noop ,
-        browser.tabs.remove(tab.id); //
-      }
-        */
     }
   }
 }
 
 async function createContainer() {
-  let color = usecolors[Math.floor(Math.random() * usecolors.length)];
+  const color = usecolors[Math.floor(Math.random() * usecolors.length)];
   let container = await browser.contextualIdentities.create({
     name: "Temp",
     color: color,
     icon: "circle",
   });
-  let cookieStoreId = container.cookieStoreId;
-  let name = "Temp " + Date.now();
-  await browser.contextualIdentities.update(cookieStoreId, { name: name });
+  await browser.contextualIdentities.update(container.cookieStoreId, {
+    name: "Temp " + Date.now(),
+  });
   return container;
 }
 
@@ -264,24 +251,17 @@ async function onStorageChange() {
   if (usecolors.length < 1) {
     usecolors = allcolors;
   }
-  multiopen = await getFromStorage("number", "multiopen", 2);
-  multiopen2 = await getFromStorage("number", "multiopen2", 3);
-  multiopen3 = await getFromStorage("number", "multiopen3", 4);
 
   listmode = await getFromStorage("string", "listmode", "include");
-
   regexList = await buildRegExList();
-
-  neverOpenInTempContainerRegexList =
-    await buildNeverOpenInTempContainerRegExList();
-
+  ignoredRegexList = await buildIgnoreRegexList();
   historyCleanUpQueue = await getFromStorage(
     "object",
     "historyCleanUpQueue",
     [],
   );
 
-  containerForSameOrigin = await getFromStorage("boolean", "sameorigin", true);
+  splitorigins = await getFromStorage("boolean", "splitorigins", false);
 }
 
 // show the user the options page on first installation
@@ -289,61 +269,25 @@ async function onInstall(details) {
   if (details.reason === "install") {
     browser.runtime.openOptionsPage();
   }
-  // convert storage data
-  if (details.reason === "update") {
-    let selectors = await getFromStorage("object", "selectors", []);
-
-    out = "";
-    selectors.forEach((e) => {
-      if (typeof e.url_regex === "string") {
-        out = out + e.url_regex + "\n";
-      }
-    });
-
-    if (out !== "") {
-      setToStorage("textarea_regexstrs", out);
-    }
-  }
 }
 
 async function onCommand(command) {
-  if (command === "opennewtab") {
-    createTempContainerTab("about:newtab");
-  }
-
-  if (command === "openinsame") {
-    // get container of currently active tab
-    // create new tab with container id
-    let tabs = await browser.tabs.query({ currentWindow: true, active: true });
-    if (tabs.length > 0) {
-      const atab = tabs[0];
-      openNewTabInExistingContainer(atab.cookieStoreId);
-    }
-  }
-
-  if (command.startsWith("multiopen")) {
-    let repeat = 0;
-
-    switch (command) {
-      case "multiopen":
-        repeat = multiopen;
-        break;
-      case "multiopen2":
-        repeat = multiopen2;
-        break;
-      case "multiopen3":
-        repeat = multiopen3;
-        break;
-      default:
-        return;
-    }
-    let tabs = await browser.tabs.query({ currentWindow: true, active: true });
-    if (tabs.length > 0) {
-      const atab = tabs[0];
-      for (let i = 0; i < repeat; i++) {
-        createTempContainerTab(atab.url);
+  switch (command) {
+    case "opennewtab":
+      createTempContainerTab("about:newtab");
+      break;
+    case "openinsame":
+      // get container of currently active tab
+      // create new tab with container id
+      const tabs = await browser.tabs.query({
+        currentWindow: true,
+        active: true,
+      });
+      if (tabs.length > 0) {
+        const atab = tabs[0];
+        openNewTabInExistingContainer(atab.cookieStoreId);
       }
-    }
+      break;
   }
 }
 
@@ -354,23 +298,11 @@ function sameOrigin(urlA, urlB) {
 }
 
 async function onBeforeNavigate(details) {
-  /*
-  if(details.originUrl.startsWith('moz-extension')){
-        return;
-    }
-    */
+  const isIgnored = isOnIngoreList(details.url);
 
-  if (typeof details.url !== "string") {
+  if (isIgnored) {
     return;
   }
-  if (!details.url.startsWith("http")) {
-    return;
-  }
-
-  const _isOnNeverInTempContainerRegexList =
-    isOnNeverOpenInTempContainerRegexList(details.url);
-
-  //console.debug(details, _isOnNeverInTempContainerRegexList);
 
   let tabInfo;
   try {
@@ -380,70 +312,44 @@ async function onBeforeNavigate(details) {
     return;
   }
 
-  let inTempContainer = await (async (cs) => {
+  const [inContainer, inTempContainer] = await (async (cs) => {
     try {
       const container = await browser.contextualIdentities.get(cs);
-      return container.name.startsWith("Temp");
+      return [true, container.name.startsWith("Temp")];
     } catch (e) {
-      return false;
+      return [false, false];
     }
-
-    // in a container
   })(tabInfo.cookieStoreId);
 
-  if (inTempContainer) {
-    if (_isOnNeverInTempContainerRegexList) {
-      const obj = {
-        active: tabInfo.active || false,
-        url: details.url,
-      };
-      browser.tabs.create(obj);
-      browser.tabs.remove(tabInfo.tabId);
-      return { cancel: true };
+  if (!inContainer) {
+    // not in a container
+    const _isOnList = isOnRegexList(details.url);
+    if (
+      (listmode === "exclude" && !_isOnList) ||
+      (listmode === "include" && _isOnList)
+    ) {
+      await createTempContainerTab(details.url, tabInfo.active);
+      browser.tabs.remove(tabInfo.id);
     }
-
-    // make links open from containered tabs not open in the same container
-    // !experimental
-    if (tabInfo.openerTabId && containerForSameOrigin) {
-      const openertabInfo = await browser.tabs.get(tabInfo.openerTabId);
-      if (openertabInfo.cookieStoreId === tabInfo.cookieStoreId) {
-        if (!sameOrigin(details.url, openertabInfo.url)) {
-          await createTempContainerTab(details.url, tabInfo.active);
-          browser.tabs.remove(tabInfo.id);
-          return { cancel: true };
-        }
-      }
-    }
-
-    if (!historyPermissionEnabled) {
-      return;
-    }
-    if (historyCleanUpQueue.includes(details.url)) {
-      return;
-    }
-    historyCleanUpQueue.push(details.url);
-    setToStorage("historyCleanUpQueue", historyCleanUpQueue);
   } else {
-    if (!_isOnNeverInTempContainerRegexList) {
-      // not in a container
-      const _isOnList = isOnRegexList(details.url);
-      if (
-        (listmode === "exclude" && !_isOnList) ||
-        (listmode === "include" && _isOnList)
-      ) {
-        await createTempContainerTab(details.url, tabInfo.active);
-        browser.tabs.remove(tabInfo.id);
-        return { cancel: true };
+    // in a container
+    if (inTempContainer) {
+      // in a TC
+      if (!historyPermissionEnabled) {
+        return;
       }
+      if (historyCleanUpQueue.includes(details.url)) {
+        return;
+      }
+      historyCleanUpQueue.push(details.url);
+      setToStorage("historyCleanUpQueue", historyCleanUpQueue);
     }
   }
 }
 
 function cleanupHistory() {
   const len = historyCleanUpQueue.length;
-
   const its = len > 1 ? len / 2 : 1;
-
   for (let i = 0; i < its; i++) {
     try {
       browser.history.deleteUrl({
@@ -453,7 +359,6 @@ function cleanupHistory() {
       //noop
     }
   }
-
   setToStorage("historyCleanUpQueue", historyCleanUpQueue);
 }
 
@@ -471,7 +376,6 @@ async function handlePermissionChange() {
 
   // init vars
   await onStorageChange();
-
   await handlePermissionChange();
 
   // trigger inital cleanup, for browser restart
@@ -482,56 +386,6 @@ async function handlePermissionChange() {
   browser.commands.onCommand.addListener(onCommand);
   browser.storage.onChanged.addListener(onStorageChange);
   browser.tabs.onRemoved.addListener(onTabRemoved);
-
-  /*
-  browser.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
-  browser.webNavigation.onHistoryStateUpdated.addListener(onBeforeNavigate);
-  browser.webNavigation.onReferenceFragmentUpdated.addListener(
-    onBeforeNavigate,
-  );
-  browser.webNavigation.onErrorOccurred.addListener(onBeforeNavigate);
- */
-
-  /*
-  browser.tabs.onUpdated.addListener((tabId, changeInfo, tabInfo) => {
-    if (
-      typeof changeInfo.url === "string" &&
-      changeInfo.url.startsWith("https")
-    ) {
-      newtabInfo = tabInfo;
-      newtabInfo.url = changeInfo.url;
-      onBeforeNavigate(newtabInfo);
-    }
-  });
-*/
-
-  /*
- *  unused Force different origins into new tabs
- *  not sure if thats a good idea or bad yet
- *  since it requires the webRequest + webRequestBlocking + <all_urls> permission
- *  i'll leave it out for now
-
-  async function onBeforeRequest(details) {
-    const tab = await browser.tabs.get(details.tabId);
-    const tab_url = new URL(tab.url);
-    const req_url = new URL(details.url);
-    //console.debug(tab.url, details.url);
-
-    if (!tab.url.startsWith("about:") && tab_url.origin !== req_url.origin) {
-      browser.tabs.create({
-        active: true,
-        url: details.url,
-      });
-      return { cancel: true };
-    }
-  }
-
-  browser.webRequest.onBeforeRequest.addListener(
-    onBeforeRequest,
-    { urls: ["<all_urls>"], types: ["main_frame"] },
-    ["blocking"],
-  );
-*/
 
   browser.webRequest.onBeforeRequest.addListener(
     onBeforeNavigate,

@@ -22,15 +22,6 @@
     },
     "openinsame": {
       "description": "Open newtab in same container as current tab"
-    },
-    "multiopen": {
-      "description": "Open current tab URL in X TC tabs"
-    },
-    "multiopen2": {
-      "description": "Open current tab URL in Y TC tabs"
-    },
-    "multiopen3": {
-      "description": "Open current tab URL in Z TC tabs"
     }
   },
   "description": "Open the page,tab,link or bookmark in a new temporary container tab",
@@ -53,5 +44,5 @@
     "webRequestBlocking"
   ],
   "optional_permissions": ["bookmarks", "history"],
-  "version": "1.1.42"
+  "version": "1.1.43"
 }

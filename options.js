@@ -11,47 +11,16 @@ async function setToStorage(id, value) {
   return browser.storage.local.set(obj);
 }
 
-function onChange(evt) {
-  let id = evt.target.id;
-  let el = document.getElementById(id);
-
-  let value = el.type === "checkbox" ? el.checked : el.value;
-  let obj = {};
-
-  if (value === "") {
-    return;
-  }
-  if (el.type === "number") {
-    try {
-      value = parseInt(value);
-      if (isNaN(value)) {
-        value = el.min;
-      }
-      if (value < el.min) {
-        value = el.min;
-      }
-    } catch (e) {
-      value = el.min;
-    }
-  }
-
-  obj[id] = value;
-
-  browser.storage.local.set(obj).catch(console.error);
-}
-
 document.getElementById("textarea_regexstrs").addEventListener("input", () => {
   let val = document.getElementById("textarea_regexstrs").value.trim();
   setToStorage("textarea_regexstrs", val);
 });
 
 document
-  .getElementById("textarea_neveropenintcregexstrs")
+  .getElementById("textarea_ignoreregexstrs")
   .addEventListener("input", () => {
-    val = document
-      .getElementById("textarea_neveropenintcregexstrs")
-      .value.trim();
-    setToStorage("textarea_neveropenintcregexstrs", val);
+    val = document.getElementById("textarea_ignoreregexstrs").value.trim();
+    setToStorage("textarea_ignoreregexstrs", val);
   });
 
 browser.storage.local
@@ -71,10 +40,10 @@ browser.storage.local
   .catch(console.error);
 
 browser.storage.local
-  .get("textarea_neveropenintcregexstrs")
+  .get("textarea_ignoreregexstrs")
   .then((obj) => {
-    let el = document.getElementById("textarea_neveropenintcregexstrs");
-    let val = obj["textarea_neveropenintcregexstrs"];
+    let el = document.getElementById("textarea_ignoreregexstrs");
+    let val = obj["textarea_ignoreregexstrs"];
 
     if (typeof val !== "undefined") {
       if (el.type === "checkbox") {
@@ -85,27 +54,6 @@ browser.storage.local
     }
   })
   .catch(console.error);
-
-["multiopen", "multiopen2", "multiopen3", "sameorigin"].map((id) => {
-  browser.storage.local
-    .get(id)
-    .then((obj) => {
-      let el = document.getElementById(id);
-      let val = obj[id];
-
-      if (typeof val !== "undefined") {
-        if (el.type === "checkbox") {
-          el.checked = val;
-        } else {
-          el.value = val;
-        }
-      }
-    })
-    .catch(console.error);
-
-  let el = document.getElementById(id);
-  el.addEventListener("input", onChange);
-});
 
 /* input[ radio || checkbox ] */
 ["toolbarAction", "usecolors", "listmode"].map((id) => {

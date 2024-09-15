@@ -94,7 +94,7 @@
       <abbr
         title="Configure when temp containers should be automatically created/used"
       >
-        <b>Automation Mode (?):</b>
+        <b>Operation Mode (?):</b>
       </abbr>
     </legend>
 
@@ -129,14 +129,12 @@ Examples:
 
   <fieldset>
     <legend>
-      <abbr
-        title="Tabs with matching URLs will automatically be re-opened outside the temp container isolation"
-      >
-        <b>Exclude from TC (?)</b></abbr
+      <abbr title="Tabs with matching URLs will be ignored">
+        <b>Ignore Matches (?)</b></abbr
       >
     </legend>
     <textarea
-      id="textarea_neveropenintcregexstrs"
+      id="textarea_ignoreregexstrs"
       placeholder="Enter regular expressions line by line here
 Examples:
     ^https:\/\/www\.facebook\.com.*
@@ -144,38 +142,6 @@ Examples:
     ^https:\/\/.*\.wikipedia\.org.*
 "
     ></textarea>
-
-    <!--button id="neveropenintcregexstrs_save_btn" style="float: right">
-        Save
-      </button-->
-  </fieldset>
-
-  <fieldset>
-    <legend>
-      <abbr
-        title="Specify the amounts of tabs that should be opened for each shortcut"
-      >
-        <b>Multi-Open Shortcut Parameters (?):</b>
-      </abbr>
-    </legend>
-
-    X <input type="number" id="multiopen" value="2" min="0" max="99" /> Y
-    <input type="number" id="multiopen2" value="3" min="0" max="99" /> Z
-    <input type="number" id="multiopen3" value="4" min="0" max="99" />
-  </fieldset>
-
-  <fieldset>
-    <legend>
-      <abbr title="Prevent data leakage on crossing web page origin boundaries">
-        <b>Same-origin policy (?)</b>
-      </abbr>
-    </legend>
-    <span>
-      <input type="checkbox" id="sameorigin" checked />
-      <label for="sameorigin"
-        >Create another TC for links with different <i>origin</i></label
-      >
-    </span>
   </fieldset>
 
   <script src="options.js"></script>
