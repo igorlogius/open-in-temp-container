@@ -225,6 +225,8 @@ async function onBAClicked(tab) {
   } else {
     if (tab.url.startsWith("http")) {
       await createTempContainerTab(tab.url, true);
+    } else {
+      createTempContainerTab();
     }
   }
 }
