@@ -382,5 +382,9 @@ async function handlePermissionChange() {
   browser.permissions.onRemoved.addListener(handlePermissionChange);
   browser.storage.onChanged.addListener(onStorageChange);
   browser.tabs.onRemoved.addListener(onTabRemoved);
-  browser.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
+  browser.webRequest.onBeforeRequest.addListener(
+    onBeforeNavigate,
+    { urls: ["<all_urls>"], types: ["main_frame"] },
+    ["blocking"],
+  );
 })();
