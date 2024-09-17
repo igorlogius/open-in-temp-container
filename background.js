@@ -6,10 +6,10 @@ let intId = null;
 let historyCleanUpQueue = [];
 let containerCleanupTimer = null;
 let toolbarAction = "";
-let deldelay = 30000; // delay until Tmp Containers and History Entries are removed
+let histdeldelay = 30000;
+let tcdeldelay = 5000;
 let regexList = null;
 let ignoredRegexList = null;
-let splitorigins = false;
 
 // array of all allowed container colors
 const allcolors = [
@@ -170,27 +170,21 @@ browser.menus.create({
 
 // delayed container cleanup
 async function onTabRemoved() {
-  if (containerCleanupTimer !== null) {
-    clearTimeout(containerCleanupTimer);
-  }
-
+  clearTimeout(containerCleanupTimer);
   containerCleanupTimer = setTimeout(async () => {
     const containerWithTabs = new Set(
       (await browser.tabs.query({})).map((t) => t.cookieStoreId),
     );
-
     containers = await browser.contextualIdentities.query({});
-
     containers.forEach((c) => {
       if (
         !containerWithTabs.has(c.cookieStoreId) &&
-        c.name.startsWith("Temp")
+        c.name.startsWith("Temp ")
       ) {
         browser.contextualIdentities.remove(c.cookieStoreId);
       }
     });
-    containerCleanupTimer = null;
-  }, deldelay);
+  }, tcdeldelay);
 }
 
 async function createTempContainerTab(url, activ = true) {
@@ -234,13 +228,13 @@ async function onBAClicked(tab) {
 async function createContainer() {
   const color = usecolors[Math.floor(Math.random() * usecolors.length)];
   let container = await browser.contextualIdentities.create({
-    name: "Temp",
+    name: "Temp " + Date.now(),
     color: color,
     icon: "circle",
   });
-  await browser.contextualIdentities.update(container.cookieStoreId, {
+  /*await browser.contextualIdentities.update(container.cookieStoreId, {
     name: "Temp " + Date.now(),
-  });
+  });*/
   return container;
 }
 
@@ -262,8 +256,6 @@ async function onStorageChange() {
     "historyCleanUpQueue",
     [],
   );
-
-  splitorigins = await getFromStorage("boolean", "splitorigins", false);
 }
 
 // show the user the options page on first installation
@@ -291,12 +283,6 @@ async function onCommand(command) {
       }
       break;
   }
-}
-
-function sameOrigin(urlA, urlB) {
-  const a = new URL(urlA);
-  const b = new URL(urlB);
-  return a.origin === b.origin;
 }
 
 async function onBeforeNavigate(details) {
@@ -332,11 +318,11 @@ async function onBeforeNavigate(details) {
     ) {
       await createTempContainerTab(details.url, tabInfo.active);
       browser.tabs.remove(tabInfo.id);
+      return;
     }
   } else {
     // in a container
     if (inTempContainer) {
-      // in a TC
       if (!historyPermissionEnabled) {
         return;
       }
@@ -359,6 +345,7 @@ function cleanupHistory() {
       });
     } catch (e) {
       //noop
+      console.warn(e);
     }
   }
   setToStorage("historyCleanUpQueue", historyCleanUpQueue);
@@ -369,7 +356,7 @@ async function handlePermissionChange() {
     await browser.permissions.contains(historyPermission);
   clearInterval(intId);
   if (historyPermissionEnabled) {
-    intId = setInterval(cleanupHistory, deldelay);
+    intId = setInterval(cleanupHistory, histdeldelay);
   }
 }
 
@@ -380,21 +367,15 @@ async function handlePermissionChange() {
   await onStorageChange();
   await handlePermissionChange();
 
-  // trigger inital cleanup, for browser restart
-  setTimeout(onTabRemoved, deldelay);
+  // trigger inital cleanup, for browser re-start
+  setTimeout(onTabRemoved, tcdeldelay);
 
   // register listeners
   browser.browserAction.onClicked.addListener(onBAClicked);
   browser.commands.onCommand.addListener(onCommand);
-  browser.storage.onChanged.addListener(onStorageChange);
-  browser.tabs.onRemoved.addListener(onTabRemoved);
-
-  browser.webRequest.onBeforeRequest.addListener(
-    onBeforeNavigate,
-    { urls: ["<all_urls>"], types: ["main_frame"] },
-    ["blocking"],
-  );
-
   browser.permissions.onAdded.addListener(handlePermissionChange);
   browser.permissions.onRemoved.addListener(handlePermissionChange);
+  browser.storage.onChanged.addListener(onStorageChange);
+  browser.tabs.onRemoved.addListener(onTabRemoved);
+  browser.webNavigation.onBeforeNavigate.addListener(onBeforeNavigate);
 })();

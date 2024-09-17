@@ -34,15 +34,13 @@
     "page": "options.html"
   },
   "permissions": [
-    "<all_urls>",
     "contextualIdentities",
     "cookies",
     "menus",
     "storage",
     "tabs",
-    "webRequest",
-    "webRequestBlocking"
+    "webNavigation"
   ],
   "optional_permissions": ["bookmarks", "history"],
-  "version": "1.1.44"
+  "version": "1.1.45"
 }
