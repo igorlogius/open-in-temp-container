@@ -286,6 +286,11 @@ async function onCommand(command) {
 }
 
 async function onBeforeNavigate(details) {
+  // ignore everything not http/s, like about: and moz-extensions
+  if (!details.url.startsWith("http")) {
+    return;
+  }
+
   const isIgnored = isOnIngoreList(details.url);
 
   if (isIgnored) {

@@ -42,5 +42,5 @@
     "webNavigation"
   ],
   "optional_permissions": ["bookmarks", "history"],
-  "version": "1.1.45"
+  "version": "1.1.46"
 }
