@@ -227,8 +227,9 @@ async function onBAClicked(tab) {
 
 async function createContainer() {
   const color = usecolors[Math.floor(Math.random() * usecolors.length)];
+  const now = "" + Date.now();
   let container = await browser.contextualIdentities.create({
-    name: "Temp " + Date.now(),
+    name: "Temp " +  now.split('').reverse().join(''),
     color: color,
     icon: "circle",
   });
@@ -323,7 +324,7 @@ async function onBeforeNavigate(details) {
     ) {
       await createTempContainerTab(details.url, tabInfo.active);
       browser.tabs.remove(tabInfo.id);
-      return;
+      return { cancel: true }; // prevent history from being created?
     }
   } else {
     // in a container
@@ -342,6 +343,7 @@ async function onBeforeNavigate(details) {
 
 function cleanupHistory() {
   const len = historyCleanUpQueue.length;
+  console.debug("cleanupHistory", len);
   const its = len > 1 ? len / 2 : 1;
   for (let i = 0; i < its; i++) {
     try {
