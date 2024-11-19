@@ -10,6 +10,8 @@ let histdeldelay = 30000;
 let tcdeldelay = 5000;
 let regexList = null;
 let ignoredRegexList = null;
+let emojis = [];
+let emojisoffset = 0;
 
 // array of all allowed container colors
 const allcolors = [
@@ -229,7 +231,10 @@ async function createContainer() {
   const color = usecolors[Math.floor(Math.random() * usecolors.length)];
   const now = "" + Date.now();
   let container = await browser.contextualIdentities.create({
-    name: "Temp " +  now.split('').reverse().join(''),
+    name:
+      "Temp" +
+      emojis[emojisoffset++ % (emojis.length - 1)] +
+      now.split("").reverse().join(""),
     color: color,
     icon: "circle",
   });
@@ -373,6 +378,14 @@ async function handlePermissionChange() {
   // init vars
   await onStorageChange();
   await handlePermissionChange();
+
+  let tmp = await fetch("emojis.json");
+  emojis = await tmp.json();
+  emojis = emojis
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+  emojisoffset = Math.floor(Math.random() * emojis.length);
 
   // trigger inital cleanup, for browser re-start
   setTimeout(onTabRemoved, tcdeldelay);
