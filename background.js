@@ -181,7 +181,7 @@ async function onTabRemoved() {
     containers.forEach((c) => {
       if (
         !containerWithTabs.has(c.cookieStoreId) &&
-        c.name.startsWith("Temp ")
+        c.name.startsWith("Temp")
       ) {
         browser.contextualIdentities.remove(c.cookieStoreId);
       }
@@ -239,7 +239,7 @@ async function createContainer() {
     icon: "circle",
   });
   /*await browser.contextualIdentities.update(container.cookieStoreId, {
-    name: "Temp " + Date.now(),
+    name: "Temp" + Date.now(),
   });*/
   return container;
 }
