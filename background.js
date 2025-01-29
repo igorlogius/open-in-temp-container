@@ -348,7 +348,6 @@ async function onBeforeNavigate(details) {
 
 function cleanupHistory() {
   const len = historyCleanUpQueue.length;
-  console.debug("cleanupHistory", len);
   const its = len > 1 ? len / 2 : 1;
   for (let i = 0; i < its; i++) {
     try {
@@ -369,6 +368,30 @@ async function handlePermissionChange() {
   clearInterval(intId);
   if (historyPermissionEnabled) {
     intId = setInterval(cleanupHistory, histdeldelay);
+  }
+}
+
+async function onTabsUpdated(tabId, changeInfo, tabInfo) {
+  if (typeof changeInfo.url === "string" && changeInfo.url.startsWith("http")) {
+    const inTempContainer = await (async (cs) => {
+      try {
+        const container = await browser.contextualIdentities.get(cs);
+        return container.name.startsWith("Temp");
+      } catch (e) {
+        return false;
+      }
+    })(tabInfo.cookieStoreId);
+
+    if (inTempContainer) {
+      if (!historyPermissionEnabled) {
+        return;
+      }
+      if (historyCleanUpQueue.includes(changeInfo.url)) {
+        return;
+      }
+      historyCleanUpQueue.push(changeInfo.url);
+      setToStorage("historyCleanUpQueue", historyCleanUpQueue);
+    }
   }
 }
 
@@ -402,4 +425,5 @@ async function handlePermissionChange() {
     { urls: ["<all_urls>"], types: ["main_frame"] },
     ["blocking"],
   );
+  browser.tabs.onUpdated.addListener(onTabsUpdated, { properties: ["url"] });
 })();
